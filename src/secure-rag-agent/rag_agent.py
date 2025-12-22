@@ -3,12 +3,14 @@ from openai import AzureOpenAI
 from azure.search.documents import SearchClient
 from azure.search.documents.models import VectorizedQuery
 from azure.core.credentials import AzureKeyCredential
-from .config import (
+from config import (
     OPENAI_ENDPOINT,
     OPENAI_API_KEY,
+    OPENAI_EMBEDDING_MODEL,
     OPENAI_CHAT_MODEL,
     SEARCH_SERVICE_ENDPOINT,
     SEARCH_API_KEY,
+    API_VERSION,
     INDEX_NAME
 )
 
@@ -16,10 +18,10 @@ def retrieve_context(query: str, top_k: int = 3) -> list[str]:
     # 1. Generate embedding for user query
     client = AzureOpenAI(
         api_key=OPENAI_API_KEY,
-        api_version="2024-02-01",
+        api_version=API_VERSION,
         azure_endpoint=OPENAI_ENDPOINT
     )
-    emb = client.embeddings.create(input=[query], model="text-embedding-ada-002").data[0].embedding
+    emb = client.embeddings.create(input=[query], model=OPENAI_EMBEDDING_MODEL).data[0].embedding
 
     # 2. Vector search (return only redacted content)
     search_client = SearchClient(
@@ -44,7 +46,7 @@ def generate_answer(user_question: str) -> str:
 
     client = AzureOpenAI(
         api_key=OPENAI_API_KEY,
-        api_version="2024-02-01",
+        api_version=API_VERSION,
         azure_endpoint=OPENAI_ENDPOINT
     )
 
@@ -52,6 +54,8 @@ def generate_answer(user_question: str) -> str:
         {"role": "system", "content": "You are a helpful assistant. Use only the provided context."},
         {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {user_question}"}
     ]
+
+    print(f"context_list = {context_list}")
 
     response = client.chat.completions.create(
         model=OPENAI_CHAT_MODEL,
