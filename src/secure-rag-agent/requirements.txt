@@ -1,3 +1,9 @@
 dotenv
 requests
 azure-storage-blob
+azure-ai-textanalytics
+azure.keyvault
+azure.identity
+azure.search
+azure.search.documents
+six

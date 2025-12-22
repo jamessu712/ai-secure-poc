@@ -1,7 +1,7 @@
 # pii_redactor.py
 from azure.ai.textanalytics import TextAnalyticsClient
 from azure.core.credentials import AzureKeyCredential
-from .config import COGNITIVE_SERVICES_ENDPOINT, COGNITIVE_SERVICES_KEY
+from config import COGNITIVE_SERVICES_ENDPOINT, COGNITIVE_SERVICES_KEY
 import hashlib
 import hmac
 

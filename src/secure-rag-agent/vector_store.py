@@ -2,7 +2,7 @@
 from openai import AzureOpenAI
 from azure.search.documents import SearchClient
 from azure.core.credentials import AzureKeyCredential
-from .config import (
+from config import (
     OPENAI_ENDPOINT,
     OPENAI_API_KEY,
     OPENAI_EMBEDDING_MODEL,
@@ -14,7 +14,7 @@ from .config import (
 def get_embedding(text: str) -> list[float]:
     client = AzureOpenAI(
         api_key=OPENAI_API_KEY,
-        api_version="2024-02-01",
+        api_version="2023-05-15",
         azure_endpoint=OPENAI_ENDPOINT
     )
     response = client.embeddings.create(input=[text], model=OPENAI_EMBEDDING_MODEL)
