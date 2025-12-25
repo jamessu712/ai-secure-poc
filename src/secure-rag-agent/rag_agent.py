@@ -55,7 +55,7 @@ def generate_answer(user_question: str) -> str:
         {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {user_question}"}
     ]
 
-    print(f"context_list = {context_list}")
+#     print(f"context_list = {context_list}")
 
     response = client.chat.completions.create(
         model=OPENAI_CHAT_MODEL,
@@ -63,3 +63,9 @@ def generate_answer(user_question: str) -> str:
         temperature=0.3
     )
     return response.choices[0].message.content
+
+def rag_QA(question: str):
+    answer = generate_answer(question)
+    print(f"Q: {question}")
+    print(f"A: {answer}")
+    print("\n")
