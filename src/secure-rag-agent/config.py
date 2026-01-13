@@ -26,7 +26,7 @@ COGNITIVE_SERVICES_ENDPOINT = os.getenv("COGNITIVE_SERVICES_ENDPOINT", "COGNITIV
 
 API_VERSION = os.getenv("API_VERSION", "API_VERSION")
 # HMAC Salt for deterministic user ID (optional)
-HMAC_SALT = client.get_secret("hmac-salt").value
+HMAC_SALT = client.get_secret("bobs-poc-hmac-salt").value
 
 ###############################################################
 print(f"OPENAI_API_KEY = {OPENAI_API_KEY}")
