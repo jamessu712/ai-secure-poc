@@ -9,6 +9,10 @@ def hash_email(email: str, salt: str) -> str:
     """Deterministic hash email for anonymization but traceable"""
     return hmac.new(salt.encode(), email.lower().encode(), hashlib.sha256).hexdigest()[:16]
 
+def hash_pii(pii_text: str, salt: str) -> str:
+    """Deterministic hash PII for anonymization but traceable"""
+    return hmac.new(salt.encode(), pii_text.lower().encode(), hashlib.sha256).hexdigest()[:16]
+
 def redact_pii(text: str, salt: str) -> str:
     """
     Use Azure Text Analytics to redact PII, and replace emails with hash_id
@@ -32,8 +36,14 @@ def redact_pii(text: str, salt: str) -> str:
         if entity.category == "Email":
             hashed = hash_email(entity.text, salt)
             placeholder = f"user_{hashed}"
+        elif entity.category == "Person":
+            # You can reuse hash_email or define a separate hash_name function
+            # Here we use a generic hash (e.g., based on consistent hashing of name + salt)
+            hashed = hash_pii(entity.text, salt)
+            placeholder = f"name_{hashed}"
         else:
-            placeholder = "<REDACTED>"
+#             placeholder = "<REDACTED>"
+            placeholder = ""
         start = entity.offset
         end = start + entity.length
         redacted_text = redacted_text[:start] + placeholder + redacted_text[end:]
