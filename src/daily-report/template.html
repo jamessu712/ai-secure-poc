@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>R&M Daily Monitor Dashboard - Bobs</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --color-background-primary: #ffffff;
+  --color-background-secondary: #f5f5f3;
+  --color-background-tertiary: #eeede8;
+  --color-text-primary: #1a1a18;
+  --color-text-secondary: #5f5e5a;
+  --color-text-tertiary: #888780;
+  --color-border-tertiary: rgba(0,0,0,0.12);
+  --color-border-secondary: rgba(0,0,0,0.22);
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background-primary: #1e1e1c;
+    --color-background-secondary: #2a2a28;
+    --color-background-tertiary: #111110;
+    --color-text-primary: #f0efe9;
+    --color-text-secondary: #b4b2a9;
+    --color-text-tertiary: #888780;
+    --color-border-tertiary: rgba(255,255,255,0.10);
+    --color-border-secondary: rgba(255,255,255,0.20);
+  }
+}
+body {
+  font-family: var(--font-sans);
+  background: var(--color-background-tertiary);
+  color: var(--color-text-primary);
+  min-height: 100vh;
+  padding: 24px;
+}
+.dash { max-width: 960px; margin: 0 auto; }
+.dash-header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 1.25rem; }
+.dash-title { font-size: 20px; font-weight: 500; color: var(--color-text-primary); }
+.dash-sub { font-size: 13px; color: var(--color-text-secondary); }
+.tabs { display: flex; gap: 0; border-bottom: 0.5px solid var(--color-border-tertiary); margin-bottom: 1.25rem; overflow-x: auto; }
+.tab { font-size: 13px; font-weight: 400; color: var(--color-text-secondary); padding: 8px 14px; cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; background: none; border-top: none; border-left: none; border-right: none; }
+.tab.active { color: var(--color-text-primary); border-bottom: 2px solid var(--color-text-primary); font-weight: 500; }
+.tab:hover:not(.active) { color: var(--color-text-primary); }
+.section { display: none; }
+.section.active { display: block; }
+.kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 1.25rem; }
+.kpi { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 14px 16px; }
+.kpi-label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 6px; }
+.kpi-value { font-size: 22px; font-weight: 500; color: var(--color-text-primary); line-height: 1; }
+.kpi-delta { font-size: 12px; margin-top: 4px; }
+.kpi-delta.up { color: #1D9E75; }
+.kpi-delta.down { color: #E24B4A; }
+.kpi-delta.warn { color: #BA7517; }
+.chart-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-bottom: 14px; }
+.chart-row.full { grid-template-columns: 1fr; }
+.chart-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 14px 16px; }
+.chart-title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 4px; }
+.chart-sub { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 12px; }
+.legend { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 10px; font-size: 12px; color: var(--color-text-secondary); }
+.legend span { display: flex; align-items: center; gap: 5px; }
+.legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+.chart-wrap { position: relative; width: 100%; }
+.insight-box { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 12px 14px; margin-top: 12px; font-size: 13px; color: var(--color-text-secondary); line-height: 1.6; }
+.insight-box strong { color: var(--color-text-primary); font-weight: 500; }
+.bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+.bar-label { font-size: 12px; color: var(--color-text-secondary); width: 110px; text-align: right; flex-shrink: 0; }
+.bar-track { flex: 1; background: var(--color-background-secondary); border-radius: 3px; height: 8px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 3px; }
+.bar-val { font-size: 12px; color: var(--color-text-secondary); width: 55px; text-align: right; flex-shrink: 0; }
+.status-list { display: flex; flex-direction: column; gap: 6px; }
+.status-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-radius: var(--border-radius-md); background: var(--color-background-secondary); font-size: 12px; }
+.incident-info { display: flex; flex-direction: column; gap: 2px; }
+.incident-title { font-weight: 500; color: var(--color-text-primary); }
+.incident-desc { font-size: 11px; color: var(--color-text-secondary); }
+.badge { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; white-space: nowrap; }
+.badge.error { background: #FCEBEB; color: #501313; }
+@media (prefers-color-scheme: dark) {
+  .badge.error { background: #501313; color: #F7C1C1; }
+}
+@media (max-width: 640px) {
+  .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .chart-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="dash">
+  <!-- 标题头部 -->
+  <div class="dash-header">
+    <span class="dash-title">R&M Daily Monitor</span>
+    <span class="dash-sub">May 28, 2026 · Operational Intelligence Report</span>
+  </div>
+
+  <!-- 选项卡导航 -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('overview', this)">Overview</button>
+    <button class="tab" onclick="switchTab('incidents', this)">System Incidents</button>
+  </div>
+
+  <!-- OVERVIEW 选项卡页面 -->
+  <div id="overview" class="section active">
+    <!-- 动态 KPI 栅格布局 -->
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-label">Today Total Incidents</div><div class="kpi-value">{{ total_incidents }}</div><div class="kpi-delta down">From Dynatrace</div></div>
+      <div class="kpi"><div class="kpi-label">API Issues Count</div><div class="kpi-value">{{ api_count }}</div><div class="kpi-delta warn">{{ api_percentage }}% of total</div></div>
+      <div class="kpi"><div class="kpi-label">Performance Issues</div><div class="kpi-value">{{ perf_count }}</div><div class="kpi-delta" style="color:var(--color-text-secondary)">Database related</div></div>
+      <div class="kpi"><div class="kpi-label">Resolution Status</div><div class="kpi-value">100%</div><div class="kpi-delta up">All 15 CLOSED</div></div>
+    </div>
+
+    <!-- 图表展示行 -->
+    <div class="chart-row">
+      <div class="chart-card">
+        <div class="chart-title">Incidents by Catalog Category</div>
+        <div class="chart-sub">Real-time Proportions</div>
+        <div class="legend">
+          <span><span class="legend-dot" style="background:#378ADD"></span>API ({{ api_count }})</span>
+          <span><span class="legend-dot" style="background:#EF9F27"></span>Performance ({{ perf_count }})</span>
+        </div>
+        <div class="chart-wrap" style="height:200px"><canvas id="catPieChart"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-title">Incidents by Sub-Catalog</div>
+        <div class="chart-sub">Affected Component Chains</div>
+        <div style="margin-top:10px">
+          <!-- 动态条件循环生成水平条形堆叠 -->
+          {% for sub_cat, count in sub_catalog_counts.items() %}
+          <div class="bar-row">
+            <span class="bar-label">{{ sub_cat }}</span>
+            <span class="bar-track">
+              <span class="bar-fill" style="width: {{ (count / total_incidents * 100)|int }}%; background:#378ADD"></span>
+            </span>
+            <span class="bar-val">{{ count }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INCIDENTS 选项卡页面 -->
+  <div id="incidents" class="section">
+    <div class="chart-row full">
+      <div class="chart-card">
+        <div class="chart-title">Real-time Incident Log — 05/28/2026</div>
+        <div class="chart-sub">Extracted via Azure AI Pipeline</div>
+
+        <!-- 循环渲染事件日志细则 -->
+        <div class="status-list" style="margin-top:10px">
+          {% for incident in recent_incidents %}
+          <div class="status-row">
+            <div class="incident-info">
+              <span class="incident-title">{{ incident['Problem #'] }} · {{ incident['Title'] }} ({{ incident['Time_Short'] }})</span>
+              <span class="incident-desc">{{ incident['Description'] }}</span>
+            </div>
+            <span class="badge error">CLOSED · {{ incident['Duration (Minute)'] }}</span>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- 动态承接 Azure OpenAI 生成的文本见解 -->
+        <div class="insight-box">
+          <strong>Azure AI 诊断见解:</strong> {{ ai_insight }}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 引入前端绘图引擎 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
+const labelColor = '#888780';
+Chart.defaults.font.size = 11;
+Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+Chart.defaults.color = labelColor;
+
+// 动态注入 Chart.js 的核心配额数组
+new Chart(document.getElementById('catPieChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['API', 'Performance'],
+    datasets: [{
+      data: [{{ api_count }}, {{ perf_count }}],
+      backgroundColor: ['#378ADD','#EF9F27'],
+      borderWidth: 0,
+      hoverOffset: 4
+    }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '62%' }
+});
+
+// 选项卡切换纯 JS 函数
+function switchTab(id, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>
