@@ -3,7 +3,7 @@ import json
 import pandas as pd
 from jinja2 import Template
 from openai import AzureOpenAI
-
+from config import AZURE_ENDPOINT,AZURE_API_KEY,AZURE_API_VERSION,AZURE_DEPLOYMENT_NAME
 # ==========================================
 # 1. 配置 Azure OpenAI 凭证
 # ==========================================
