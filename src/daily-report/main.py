@@ -4,6 +4,7 @@ import pandas as pd
 from jinja2 import Template
 from openai import AzureOpenAI
 from config import *
+from datetime import datetime
 
 # ==========================================
 # 1. Configure Azure OpenAI credentials
@@ -112,8 +113,9 @@ def analyze_and_generate_report(csv_path, template_path, output_path):
 
 if __name__ == "__main__":
     # Execute the script (ensure the file "05282026(Dynatrace).csv" exists in the current directory)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     analyze_and_generate_report(
         csv_path="05282026(Dynatrace).csv",
         template_path="template.html",
-        output_path="rm_daily_monitor_dashboard-bobs.html"
+        output_path=f"rm_daily_monitor_dashboard-bobs_{timestamp}.html"
     )
