@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>R&M Daily Monitor Dashboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-background-primary: #ffffff;
+      --color-background-secondary: #f5f5f3;
+      --color-background-tertiary: #eeede8;
+      --color-text-primary: #1a1a18;
+      --color-text-secondary: #5f5e5a;
+      --color-text-tertiary: #888780;
+      --color-border-tertiary: rgba(0,0,0,0.12);
+      --color-border-secondary: rgba(0,0,0,0.22);
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --border-radius-md: 8px;
+      --border-radius-lg: 12px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-background-primary: #1e1e1c;
+        --color-background-secondary: #2a2a28;
+        --color-background-tertiary: #111110;
+        --color-text-primary: #f0efe9;
+        --color-text-secondary: #aba9a2;
+        --color-text-tertiary: #706f6a;
+        --color-border-tertiary: rgba(255,255,255,0.1);
+        --color-border-secondary: rgba(255,255,255,0.2);
+      }
+    }
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--color-background-secondary);
+      color: var(--color-text-primary);
+      padding: 24px;
+      line-height: 1.4;
+    }
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 16px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+    .card {
+      background-color: var(--color-background-primary);
+      border-radius: var(--border-radius-lg);
+      padding: 20px;
+      border: 1px solid var(--color-border-tertiary);
+    }
+    .col-12 { grid-column: span 12; }
+    .col-8 { grid-column: span 8; }
+    .col-4 { grid-column: span 4; }
+    .col-3 { grid-column: span 3; }
+
+    h1 { font-size: 24px; font-weight: 700; margin-bottom: 4px; letter-spacing: -0.5px; }
+    h2 { font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--color-text-secondary); margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+    .subtitle { font-size: 13px; color: var(--color-text-tertiary); margin-bottom: 24px; }
+
+    .kpi-num { font-size: 32px; font-weight: 700; letter-spacing: -1px; margin-bottom: 4px; }
+    .kpi-label { font-size: 12px; color: var(--color-text-secondary); font-weight: 500; }
+
+    .insight-text { font-size: 14px; line-height: 1.6; color: var(--color-text-primary); background: var(--color-background-secondary); padding: 16px; border-radius: var(--border-radius-md); border-left: 4px solid #378add; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+    th { font-weight: 600; color: var(--color-text-secondary); padding: 10px 12px; border-bottom: 1px solid var(--color-border-secondary); }
+    td { padding: 12px; border-bottom: 1px solid var(--color-border-tertiary); color: var(--color-text-primary); vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+
+    .status-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--color-border-tertiary); }
+    .status-row:last-child { border-bottom: none; }
+    .succ-border { border-left: 3px solid #2ecc71; padding-left: 8px !important; margin-bottom: 4px; background: rgba(46,204,113,0.03); }
+    .err-border { border-left: 3px solid #e04a4a; padding-left: 8px !important; margin-bottom: 4px; background: rgba(224,74,74,0.03); }
+
+    .badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+    .badge.success { background-color: rgba(46,204,113,0.15); color: #2ecc71; }
+    .badge.error { background-color: rgba(224,74,74,0.15); color: #e04a4a; }
+
+    .chart-container { position: relative; height: 220px; width: 100%; }
+    .chart-container-large { position: relative; height: 160px; width: 100%; margin-bottom: 15px; }
+    .incident-title { font-weight: 600; display: block; margin-bottom: 2px; }
+    .incident-desc { font-size: 12px; color: var(--color-text-secondary); line-height: 1.5; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<div class="dashboard-grid">
+  <div class="card col-12" style="background: transparent; border: none; padding: 10px 0 0 0;">
+    <h1>R&M Global Automated Operations Health Dashboard</h1>
+    <div class="subtitle">Data Snapshot Period: 2026-05-28 00:00 - 23:59 (EDT)</div>
+  </div>
+
+  <div class="card col-3">
+    <div class="kpi-num">{{ total_orders_day }}</div>
+    <div class="kpi-label">Daily Core Total Orders</div>
+  </div>
+  <div class="card col-3">
+    <div class="kpi-num">{{ total_rev_day }}</div>
+    <div class="kpi-label">Daily Gross Revenue</div>
+  </div>
+  <div class="card col-3">
+    <div class="kpi-num" style="color: #e04a4a;">{{ total_dt_incidents }}</div>
+    <div class="kpi-label">Dynatrace Core Active Alerts</div>
+  </div>
+  <div class="card col-3">
+    <div class="kpi-num" style="color: #2ecc71;">{{ cronjob_success_rate }}</div>
+    <div class="kpi-label">Cronjob Success Rate</div>
+  </div>
+
+  <div class="card col-12">
+    <h2>🤖 AI Operational Insight & Root Cause Analysis</h2>
+    <div class="insight-text">{{ ai_insight }}</div>
+  </div>
+
+  <div class="card col-4">
+    <h2>💳 Payment Channels & Order Distribution</h2>
+    <div class="chart-container">
+      <canvas id="paymentChart"></canvas>
+    </div>
+  </div>
+
+  <div class="card col-4">
+    <h2>🚨 Core Transactions & Exception Slices (Kibana Logs)</h2>
+    <div class="status-row">
+      <span>Failed Payment Authorization (Failed Auth)</span>
+      <span class="badge error">{{ failed_auths }} Hits</span>
+    </div>
+    <div class="status-row">
+      <span>Failed Payment Capture</span>
+      <span class="badge error">{{ failed_captures }} Hits</span>
+    </div>
+    <div class="status-row">
+      <span>Affirm Void</span>
+      <span class="badge success">{{ affirm_voids }} Hits</span>
+    </div>
+    <div class="status-row">
+      <span>Google API Timeout Limits</span>
+      <span class="badge error">{{ google_timeouts }} Hits</span>
+    </div>
+    <div class="status-row" style="margin-top: 15px; border-top: 1px dashed var(--color-border-secondary); padding-top: 15px;">
+      <span>FR Fraud Intercepted Orders</span>
+      <span class="badge error">{{ fr_order_count }} Orders</span>
+    </div>
+    <div class="status-row">
+      <span>Fraud Service Covered Loss Cost</span>
+      <span style="font-weight: 600; font-size: 13px; color: #e04a4a;">{{ fr_cost_sum }}</span>
+    </div>
+  </div>
+
+  <div class="card col-4">
+    <h2>🔄 Core Data Integration Transmission Status (Hotfolder)</h2>
+    <div style="display: flex; flex-direction: column; gap: 8px; overflow-y: auto; max-height: 220px;">
+      {% for hf in hotfolder_list %}
+      <div class="status-row {% if hf['Status'].lower() == 'error' %}err-border{% else %}succ-border{% endif %}" style="padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; border-radius: 4px;">
+        <span class="incident-title" style="font-size:12px;">{{ hf['Data Update Name'] }}</span>
+        <span class="badge {% if hf['Status'].lower() == 'error' %}error{% else %}success{% endif %}" style="font-size:10px;">
+            {{ hf['Status'] }}
+        </span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="card col-8">
+    <h2>⚠️ Daily Dynatrace Core System Incident Tracking Flow (Top 10)</h2>
+    <table style="margin-top: 8px;">
+      <thead>
+      <tr>
+        <th style="width: 15%;">Problem #</th>
+        <th style="width: 15%;">Start Time</th>
+        <th style="width: 25%;">Title</th>
+        <th style="width: 35%;">Description</th>
+        <th style="width: 10%;">Duration</th>
+      </tr>
+      </thead>
+      <tbody>
+      {% for inc in recent_incidents %}
+      <tr>
+        <td><strong style="color: #378add;">{{ inc['Problem #'] }}</strong></td>
+        <td><span style="color: var(--color-text-secondary);">{{ inc['Time_Short'] }}</span></td>
+        <td><span class="incident-title" style="font-size: 13px;">{{ inc['Title'] }}</span></td>
+        <td><span class="incident-desc">{{ inc['Description'] }}</span></td>
+        <td><span class="badge error">{{ inc['Duration (Minute)'] }} min</span></td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card col-4">
+    <h2>⚡ Lighthouse Performance Historical Trends & Category Breakdown</h2>
+    <div class="chart-container-large">
+      <canvas id="lhTrendChart"></canvas>
+    </div>
+    <div class="chart-container-large">
+      <canvas id="lhCategoryChart"></canvas>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const labelColor = isDarkMode ? '#aba9a2' : '#5f5e5a';
+  const gridColor = isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
+
+  // 1. Payment Doughnut Chart
+  new Chart(document.getElementById('paymentChart'), {
+    type: 'doughnut',
+    data: {
+      labels: {{ pay_labels | tojson }},
+      datasets: [{
+        data: {{ pay_counts | tojson }},
+        backgroundColor: ['#378add', '#2ecc71', '#e04a4a', '#e67e22', '#9b59b6', '#16a085', '#2c3e50', '#f1c40f', '#bdc3c7'],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'right', labels: { color: labelColor, boxWidth: 12, font: { size: 10 } } } }
+    }
+  });
+
+  // 2. Lighthouse Historical Trend Line Chart
+  new Chart(document.getElementById('lhTrendChart'), {
+    type: 'line',
+    data: {
+      labels: {{ lh_trend_labels | tojson }},
+      datasets: [{
+        label: 'Performance Trend',
+        data: {{ lh_trend_data | tojson }},
+        borderColor: '#378ADD',
+        backgroundColor: 'rgba(55,138,221,0.1)',
+        tension: 0.3,
+        fill: true,
+        pointRadius: 3
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: gridColor }, ticks: { color: labelColor, font: { size: 9 } } },
+        y: { grid: { color: gridColor }, ticks: { color: labelColor }, min: 0, max: 100 }
+      }
+    }
+  });
+
+  // 3. Lighthouse Multi-Dimension Bar Chart
+  new Chart(document.getElementById('lhCategoryChart'), {
+    type: 'bar',
+    data: {
+      labels: {{ lh_cat_labels | tojson }},
+      datasets: [
+        { label: 'Perf', data: {{ lh_cat_perf | tojson }}, backgroundColor: '#E04A4A', borderRadius: 2 },
+        { label: 'Access', data: {{ lh_cat_access | tojson }}, backgroundColor: '#2ECC71', borderRadius: 2 },
+        { label: 'Best Practices', data: {{ lh_cat_best | tojson }}, backgroundColor: '#534AB7', borderRadius: 2 },
+        { label: 'SEO', data: {{ lh_cat_seo | tojson }}, backgroundColor: '#EF9F27', borderRadius: 2 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: true, position: 'bottom', labels: { color: labelColor, boxWidth: 8, font: { size: 9 } } } },
+      scales: {
+        x: { grid: { color: gridColor }, ticks: { color: labelColor, font: { size: 9 } } },
+        y: { grid: { color: gridColor }, ticks: { color: labelColor }, min: 0, max: 100 }
+      }
+    }
+  });
+</script>
+</body>
+</html>

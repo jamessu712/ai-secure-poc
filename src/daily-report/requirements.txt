@@ -10,3 +10,4 @@ six
 pandas
 jinja2
 openai
+openpyxl

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>R&M Daily Monitor Dashboard - Bobs</title>
+  <title>R&M Daily Monitor Dashboard</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -25,327 +25,570 @@
         --color-background-secondary: #2a2a28;
         --color-background-tertiary: #111110;
         --color-text-primary: #f0efe9;
-        --color-text-secondary: #b4b2a9;
-        --color-text-tertiary: #888780;
-        --color-border-tertiary: rgba(255,255,255,0.10);
-        --color-border-secondary: rgba(255,255,255,0.20);
+        --color-text-secondary: #aba9a2;
+        --color-text-tertiary: #706f6a;
+        --color-border-tertiary: rgba(255,255,255,0.1);
+        --color-border-secondary: rgba(255,255,255,0.2);
       }
     }
     body {
       font-family: var(--font-sans);
-      background: var(--color-background-tertiary);
+      background-color: var(--color-background-secondary);
       color: var(--color-text-primary);
-      min-height: 100vh;
       padding: 24px;
+      line-height: 1.4;
     }
-    .dash { max-width: 1024px; margin: 0 auto; }
-    .dash-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 1.25rem; border-bottom: 0.5px solid var(--color-border-tertiary); padding-bottom: 10px; }
-    .dash-title-group { display: flex; align-items: baseline; gap: 12px; }
-    .dash-title { font-size: 22px; font-weight: 600; color: var(--color-text-primary); }
-    .dash-sub { font-size: 13px; color: var(--color-text-secondary); }
-    .tabs { display: flex; gap: 4px; margin-bottom: 1.25rem; overflow-x: auto; }
-    .tab { font-size: 13px; font-weight: 400; color: var(--color-text-secondary); padding: 8px 16px; cursor: pointer; border-radius: var(--border-radius-md); border: none; background: transparent; transition: all 0.2s; }
-    .tab.active { color: var(--color-text-primary); background: var(--color-background-primary); font-weight: 500; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    .tab:hover:not(.active) { color: var(--color-text-primary); background: rgba(0,0,0,0.02); }
-
-    .section { display: none; }
-    .section.active { display: block; }
-
-    .kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 1.25rem; }
-    .kpi { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 14px 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
-    .kpi-label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
-    .kpi-value { font-size: 24px; font-weight: 600; color: var(--color-text-primary); line-height: 1.1; }
-    .kpi-delta { font-size: 11px; margin-top: 6px; font-weight: 500; }
-    .kpi-delta.up { color: #1D9E75; }
-    .kpi-delta.down { color: #E24B4A; }
-    .kpi-delta.warn { color: #BA7517; }
-
-    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; }
-    .grid-full { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 16px; }
-    .chart-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
-    .chart-title { font-size: 14px; font-weight: 600; color: var(--color-text-primary); margin-bottom: 2px; }
-    .chart-sub { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 14px; }
-
-    .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-    .bar-label { font-size: 12px; color: var(--color-text-secondary); width: 140px; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .bar-track { flex: 1; background: var(--color-background-secondary); border-radius: 4px; height: 10px; overflow: hidden; }
-    .bar-fill { height: 100%; border-radius: 4px; transition: width 0.4s; }
-    .bar-val { font-size: 12px; font-weight: 500; color: var(--color-text-primary); width: 65px; text-align: right; }
-
-    .status-list { display: flex; flex-direction: column; gap: 8px; }
-    .status-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: var(--border-radius-md); background: var(--color-background-secondary); font-size: 13px; border-left: 4px solid transparent; }
-    .status-row.err-border { border-left-color: #E24B4A; }
-    .status-row.succ-border { border-left-color: #1D9E75; }
-    .incident-info { display: flex; flex-direction: column; gap: 3px; max-width: 80%; }
-    .incident-title { font-weight: 600; color: var(--color-text-primary); }
-    .incident-desc { font-size: 12px; color: var(--color-text-secondary); line-height: 1.4; }
-
-    .badge { font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 600; text-transform: uppercase; }
-    .badge.error { background: #FCEBEB; color: #501313; }
-    .badge.success { background: #E7F6F1; color: #0A3C2C; }
-    @media (prefers-color-scheme: dark) {
-      .badge.error { background: #501313; color: #F7C1C1; }
-      .badge.success { background: #0A3C2C; color: #A3E2CD; }
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 16px;
+      max-width: 1600px;
+      margin: 0 auto;
     }
-
-    .insight-box { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 14px; margin-top: 14px; font-size: 13px; color: var(--color-text-secondary); line-height: 1.6; border: 0.5px dashed var(--color-border-secondary); }
-    .insight-box strong { color: var(--color-text-primary); font-weight: 600; display: block; margin-bottom: 4px; font-size: 14px; }
-
-    table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12px; text-align: left; }
-    th { color: var(--color-text-secondary); font-weight: 500; padding: 8px 12px; border-bottom: 1px solid var(--color-border-tertiary); text-transform: uppercase; font-size: 11px; }
-    td { padding: 10px 12px; border-bottom: 0.5px solid var(--color-border-tertiary); color: var(--color-text-primary); }
-    tr:hover td { background: var(--color-background-secondary); }
-
-    @media (max-width: 768px) {
-      .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .grid-2 { grid-template-columns: 1fr; }
+    .card {
+      background-color: var(--color-background-primary);
+      border-radius: var(--border-radius-lg);
+      padding: 20px;
+      border: 1px solid var(--color-border-tertiary);
     }
+    .col-12 { grid-column: span 12; }
+    .col-8 { grid-column: span 8; }
+    .col-4 { grid-column: span 4; }
+    .col-3 { grid-column: span 3; }
+
+    h1 { font-size: 24px; font-weight: 700; margin-bottom: 4px; letter-spacing: -0.5px; }
+    h2 { font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--color-text-secondary); margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+    .subtitle { font-size: 13px; color: var(--color-text-tertiary); margin-bottom: 24px; }
+
+    .kpi-num { font-size: 32px; font-weight: 700; letter-spacing: -1px; margin-bottom: 4px; }
+    .kpi-label { font-size: 12px; color: var(--color-text-secondary); font-weight: 500; }
+
+    .insight-text { font-size: 14px; line-height: 1.6; color: var(--color-text-primary); background: var(--color-background-secondary); padding: 16px; border-radius: var(--border-radius-md); border-left: 4px solid #378add; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+    th { font-weight: 600; color: var(--color-text-secondary); padding: 10px 12px; border-bottom: 1px solid var(--color-border-secondary); }
+    td { padding: 12px; border-bottom: 1px solid var(--color-border-tertiary); color: var(--color-text-primary); vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+
+    .status-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--color-border-tertiary); }
+    .status-row:last-child { border-bottom: none; }
+    .succ-border { border-left: 3px solid #2ecc71; padding-left: 8px !important; margin-bottom: 4px; background: rgba(46,204,113,0.03); }
+    .err-border { border-left: 3px solid #e04a4a; padding-left: 8px !important; margin-bottom: 4px; background: rgba(224,74,74,0.03); }
+
+    .badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+    .badge.success { background-color: rgba(46,204,113,0.15); color: #2ecc71; }
+    .badge.error { background-color: rgba(224,74,74,0.15); color: #e04a4a; }
+
+    .chart-container { position: relative; height: 220px; width: 100%; }
+    .incident-title { font-weight: 600; display: block; margin-bottom: 2px; }
+    .incident-desc { font-size: 12px; color: var(--color-text-secondary); line-height: 1.5; }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-<div class="dash">
 
-  <div class="dash-header">
-    <div class="dash-title-group">
-      <span class="dash-title">R&M Daily Monitor</span>
-      <span class="dash-sub">Operational Intelligence & Commerce Dashboard</span>
-    </div>
-    <div class="dash-sub" style="font-weight: 500;">报告生成时间: 2026-05-28</div>
+<div class="dashboard-grid">
+  <div class="card col-12" style="background: transparent; border: none; padding: 10px 0 0 0;">
+    <h1>R&M Global Automated Operations Health Dashboard</h1>
+    <div class="subtitle">Data Snapshot Period: 2026-05-28 00:00 - 23:59 (EDT)</div>
   </div>
 
-  <div class="tabs">
-    <button class="tab active" onclick="switchTab('overview', this)">Overview & Commerce</button>
-    <button class="tab" onclick="switchTab('incidents', this)">System Incidents (Dynatrace)</button>
-    <button class="tab" onclick="switchTab('operations', this)">Operations & Failures</button>
-    <button class="tab" onclick="switchTab('performance', this)">Frontend Performance (Lighthouse)</button>
+  <div class="card col-3">
+    <div class="kpi-num">925</div>
+    <div class="kpi-label">Daily Core Total Orders</div>
+  </div>
+  <div class="card col-3">
+    <div class="kpi-num">$1,006,892.94</div>
+    <div class="kpi-label">Daily Gross Revenue</div>
+  </div>
+  <div class="card col-3">
+    <div class="kpi-num" style="color: #e04a4a;">15</div>
+    <div class="kpi-label">Dynatrace Core Active Alerts</div>
+  </div>
+  <div class="card col-3">
+    <div class="kpi-num" style="color: #2ecc71;">100.0%</div>
+    <div class="kpi-label">Cronjob Success Rate</div>
   </div>
 
-  <div id="overview" class="section active">
-    <div class="kpi-grid">
-      <div class="kpi">
-        <div class="kpi-label">今日总订单量</div>
-        <div class="kpi-value">{{ total_orders_day }}</div>
-        <div class="kpi-delta up">OrderDistribution</div>
-      </div>
-      <div class="kpi">
-        <div class="kpi-label">当日全盘总营收</div>
-        <div class="kpi-value">{{ total_rev_day }}</div>
-        <div class="kpi-delta up">不含税 (Without Tax)</div>
-      </div>
-      <div class="kpi">
-        <div class="kpi-label">Dynatrace 告警数</div>
-        <div class="kpi-value">{{ total_dt_incidents }}</div>
-        <div class="kpi-delta {% if total_dt_incidents > 5 %}down{% else %}up{% endif %}">生产运行突发异常</div>
-      </div>
-      <div class="kpi">
-        <div class="kpi-label">定时任务成功率</div>
-        <div class="kpi-value">{{ cron_success_rate }}</div>
-        <div class="kpi-delta {% if cron_fail_count > 0 %}warn{% else %}up{% endif %}">失败数: {{ cron_fail_count }} 个</div>
-      </div>
-    </div>
+  <div class="card col-12">
+    <h2>🤖 AI Operational Insight & Root Cause Analysis</h2>
+    <div class="insight-text">The e-commerce platform's operational data reveals critical insights into system performance and financial impacts. With 925 total orders generating $1,006,892.94 in revenue, the system's stability is paramount. The Dynatrace alerts highlight a significant concentration of issues within the API category, accounting for 12 out of 15 alerts, indicating a potential bottleneck in API performance. This is corroborated by Kibana logs showing 30 failed payment authorizations, which could be linked to these API issues, potentially affecting transaction success rates and customer satisfaction. Additionally, Google API timeouts, though fewer in number, suggest external integration challenges that could exacerbate these issues. The fraud monitoring system successfully intercepted 51 orders, mitigating potential financial losses of $9,150, which underscores the importance of robust fraud detection mechanisms. However, the presence of Hotfolder Sync Exceptions in integration layers suggests further investigation is needed to ensure seamless data flows. Overall, the API-related anomalies present the most significant threat to operational efficiency and revenue integrity, necessitating immediate attention to optimize API performance and reduce transaction failures.</div>
+  </div>
 
-    <div class="grid-2">
-      <div class="chart-card">
-        <div class="chart-title">Payment Type Order Share</div>
-        <div class="chart-sub">各大支付网关订单量占比分布</div>
-        <div style="position: relative; height:240px;"><canvas id="payTypeChart"></canvas></div>
-      </div>
-      <div class="chart-card">
-        <div class="chart-title">Revenue Contribution by Payment</div>
-        <div class="chart-sub">不含税销售渠道资本贡献排行</div>
-        <div style="position: relative; height:240px;"><canvas id="payRevChart"></canvas></div>
-      </div>
+  <div class="card col-4">
+    <h2>💳 Payment Channels & Order Distribution</h2>
+    <div class="chart-container">
+      <canvas id="paymentChart"></canvas>
     </div>
   </div>
 
-  <div id="incidents" class="section">
-    <div class="grid-full">
-      <div class="chart-card">
-        <div class="chart-title">Dynatrace 生产实时告警追踪日志</div>
-        <div class="chart-sub">已动态清洗并抓取今日高发的核心架构性能瓶颈、错误链路细节</div>
-
-        <div class="status-list">
-          {% for inc in recent_incidents %}
-          <div class="status-row err-border">
-            <div class="incident-info">
-              <span class="incident-title">
-                <span style="color:#E24B4A; font-weight:700;">[{{ inc['Problem #'] }}]</span>
-                {{ inc['Title'] }} — 触发时间: {{ inc['Time_Short'] }} EST
-              </span>
-              <span class="incident-desc">{{ inc['Description'] }}</span>
-            </div>
-            <span class="badge error">CLOSED · {{ inc['Duration (Minute)'] }} Mins</span>
-          </div>
-          {% endfor %}
-        </div>
-
-        <div class="insight-box">
-          <strong>🤖 Azure OpenAI 全链路智能架构诊断意见：</strong>
-          <p>{{ ai_insight }}</p>
-        </div>
-      </div>
+  <div class="card col-4">
+    <h2>🚨 Core Transactions & Exception Slices (Kibana Logs)</h2>
+    <div class="status-row">
+      <span>Failed Payment Authorization (Failed Auth)</span>
+      <span class="badge error">30 Hits</span>
+    </div>
+    <div class="status-row">
+      <span>Failed Payment Capture</span>
+      <span class="badge error">3 Hits</span>
+    </div>
+    <div class="status-row">
+      <span>Affirm Void</span>
+      <span class="badge success">7 Hits</span>
+    </div>
+    <div class="status-row">
+      <span>Google API Timeout Limits</span>
+      <span class="badge error">2 Hits</span>
+    </div>
+    <div class="status-row" style="margin-top: 15px; border-top: 1px dashed var(--color-border-secondary); padding-top: 15px;">
+      <span>FR Fraud Intercepted Orders</span>
+      <span class="badge error">51 Orders</span>
+    </div>
+    <div class="status-row">
+      <span>Fraud Service Covered Loss Cost</span>
+      <span style="font-weight: 600; font-size: 13px; color: #e04a4a;">$9,150.00</span>
     </div>
   </div>
 
-  <div id="operations" class="section">
-    <div class="grid-2">
-      <div class="chart-card">
-        <div class="chart-title">Kibana 关键核心交易异常统计</div>
-        <div class="chart-sub">涉及支付捕获与授权失败风险拦截</div>
-        <div style="margin-top:12px;">
-          <div class="bar-row">
-            <span class="bar-label">Failed capture</span>
-            <span class="bar-track"><span class="bar-fill" style="width: {{ [failed_captures*3, 100]|min }}%; background:#E24B4A;"></span></span>
-            <span class="bar-val" style="color:#E24B4A;">{{ failed_captures }} 次</span>
-          </div>
-          <div class="bar-row">
-            <span class="bar-label">Failed authorization</span>
-            <span class="bar-track"><span class="bar-fill" style="width: {{ [failed_auths*2, 100]|min }}%; background:#E24B4A;"></span></span>
-            <span class="bar-val" style="color:#E24B4A;">{{ failed_auths }} 次</span>
-          </div>
-          <div class="bar-row">
-            <span class="bar-label">Affirm Void</span>
-            <span class="bar-track"><span class="bar-fill" style="width: {{ [affirm_voids*5, 100]|min }}%; background:#EF9F27;"></span></span>
-            <span class="bar-val">{{ affirm_voids }} 次</span>
-          </div>
-          <div class="bar-row">
-            <span class="bar-label">Google API timeout</span>
-            <span class="bar-track"><span class="bar-fill" style="width: {{ [google_api_timeouts*10, 100]|min }}%; background:#534AB7;"></span></span>
-            <span class="bar-val">{{ google_api_timeouts }} 次</span>
-          </div>
-        </div>
-        <div style="margin-top: 20px; border-top: 0.5px solid var(--color-border-tertiary); padding-top: 10px;">
-          <div class="chart-title">FR (Forter Anti-Fraud) 拦截风控</div>
-          <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:13px;">
-            <span>FR 移除订单总拦截量: <strong style="color:#E24B4A;">{{ fr_order_count }} 笔</strong></span>
-            <span>财务保障资损挽回: <strong>{{ fr_removal_cost }}</strong></span>
-          </div>
-        </div>
+  <div class="card col-4">
+    <h2>🔄 Core Data Integration Transmission Status (Hotfolder)</h2>
+    <div style="display: flex; flex-direction: column; gap: 8px; overflow-y: auto; max-height: 220px;">
+
+      <div class="status-row err-border" style="padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; border-radius: 4px;">
+        <span class="incident-title" style="font-size:12px;">Stock Status</span>
+        <span class="badge error" style="font-size:10px;">
+            error
+        </span>
       </div>
 
-      <div class="chart-card">
-        <div class="chart-title">Hotfolder 底层数据通道传输流状态</div>
-        <div class="chart-sub">SAP 核心库存/门店状态物料导入链路</div>
-        <div class="status-list" style="margin-top:10px;">
-          {% for item_name, status in hotfolder_status.items() %}
-          <div class="status-row {% if 'error' in status.lower() %}err-border{% else %}succ-border{% endif %}" style="padding: 8px 12px;">
-            <span class="incident-title" style="font-size:12px;">{{ item_name }}</span>
-            <span class="badge {% if 'error' in status.lower() %}error{% else %}success{% endif %}" style="font-size:10px;">
-              {% if 'error' in status.lower() %}Error Fail{% else %}Success Archive{% endif %}
-            </span>
-          </div>
-          {% endfor %}
-        </div>
+      <div class="status-row succ-border" style="padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; border-radius: 4px;">
+        <span class="incident-title" style="font-size:12px;">On-Display</span>
+        <span class="badge success" style="font-size:10px;">
+            Success and moved to archive folder
+        </span>
       </div>
+
+      <div class="status-row succ-border" style="padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; border-radius: 4px;">
+        <span class="incident-title" style="font-size:12px;">Removed On-Display</span>
+        <span class="badge success" style="font-size:10px;">
+            Success and moved to archive folder
+        </span>
+      </div>
+
+      <div class="status-row succ-border" style="padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; border-radius: 4px;">
+        <span class="incident-title" style="font-size:12px;">SalesFeed</span>
+        <span class="badge success" style="font-size:10px;">
+            Success and moved to archive folder
+        </span>
+      </div>
+
     </div>
   </div>
 
-  <div id="performance" class="section">
-    <div class="grid-full">
-      <div class="chart-card">
-        <div class="chart-title">Google Lighthouse 核心页面线上性能跑分矩阵</div>
-        <div class="chart-sub">抓取自生产环境（包含移动端与桌面端，针对带有 ABTasty 实验及纯净页面的多维度比对）</div>
+  <div class="card col-8">
+    <h2>⚠️ Daily Dynatrace Core System Incident Tracking Flow (Top 10)</h2>
+    <table style="margin-top: 8px;">
+      <thead>
+      <tr>
+        <th style="width: 15%;">Problem #</th>
+        <th style="width: 15%;">Start Time</th>
+        <th style="width: 25%;">Title摘要</th>
+        <th style="width: 35%;">Description</th>
+        <th style="width: 10%;">Duration</th>
+      </tr>
+      </thead>
+      <tbody>
 
-        <div style="overflow-x: auto;">
-          <table>
-            <thead>
-            <tr>
-              <th>页面 / 设备类型 (Page/Device Type)</th>
-              <th>性能分 (Perf)</th>
-              <th>无障碍访问 (Access)</th>
-              <th>最佳实践 (Best Practices)</th>
-              <th>SEO 评分</th>
-              <th>FCP 渲染时间</th>
-              <th>LCP 最大内容渲染</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for row in performance_scores %}
-            <tr>
-              <td style="font-weight: 600;">{{ row['page_type'] }}</td>
-              <td style="font-weight:700; {% if row['perf'] < 30 %}color:#E24B4A;{% elif row['perf'] < 60 %}color:#BA7517;{% else %}color:#1D9E75;{% endif %}">
-                {{ row['perf'] }}
-              </td>
-              <td>{{ row['access'] }}</td>
-              <td>{{ row['best'] }}</td>
-              <td>{{ row['seo'] }}</td>
-              <td>{{ row['fcp'] }}s</td>
-              <td>{{ row['lcp'] }}s</td>
-            </tr>
-            {% endfor %}
-            </tbody>
-          </table>
+      <tr>
+        <td><strong style="color: #378add;">P-2605268</strong></td>
+        <td><span style="color: var(--color-text-secondary);">01:55</span></td>
+        <td><span class="incident-title" style="font-size: 13px;">Response time degradation</span></td>
+        <td><span class="incident-desc">The current response time (~196.12 ms) exceeds the auto-detected baseline (~4.28 ms) by 4480.5 %.Endpoint Update carts has a slowdown.</span></td>
+        <td><span class="badge error">9 min</span></td>
+      </tr>
+
+      <tr>
+        <td><strong style="color: #378add;">P-2605269</strong></td>
+        <td><span style="color: var(--color-text-secondary);">03:10</span></td>
+        <td><span class="incident-title" style="font-size: 13px;">Failure rate increase</span></td>
+        <td><span class="incident-desc">The error rate increased to 29.21 %.Service PaymentsOccController has a failure rate increase.</span></td>
+        <td><span class="badge error">7 min</span></td>
+      </tr>
+
+      <tr>
+        <td><strong style="color: #378add;">P-2605270</strong></td>
+        <td><span style="color: var(--color-text-secondary);">05:02</span></td>
+        <td><span class="incident-title" style="font-size: 13px;">Failure rate increase</span></td>
+        <td><span class="incident-desc">The error rate increased to 100 %.Endpoint https://az.services.mybobs.com/RESTAdapter/Hybris-DeliveryCharge has a failure rate increase.</span></td>
+        <td><span class="badge error">16 min</span></td>
+      </tr>
+
+      <tr>
+        <td><strong style="color: #378add;">P-2605271</strong></td>
+        <td><span style="color: var(--color-text-secondary);">05:04</span></td>
+        <td><span class="incident-title" style="font-size: 13px;">Failure rate increase</span></td>
+        <td><span class="incident-desc">The error rate increased to 100 %.Endpoint https://az.services.mybobs.com/RESTAdapter/Delivery_OpenLookUp has a failure rate increase. </span></td>
+        <td><span class="badge error">1 h 46 min min</span></td>
+      </tr>
+
+      <tr>
+        <td><strong style="color: #378add;">P-2605272</strong></td>
+        <td><span style="color: var(--color-text-secondary);">05:07</span></td>
+        <td><span class="incident-title" style="font-size: 13px;">Failure rate increase</span></td>
+        <td><span class="incident-desc">The error rate increased to 100 %.Endpoint https://az.services.mybobs.com/RESTAdapter/Hybris_OrderHistory has a failure rate increase. </span></td>
+        <td><span class="badge error">5 min</span></td>
+      </tr>
+
+      <tr>
+        <td><strong style="color: #378add;">P-2605273</strong></td>
+        <td><span style="color: var(--color-text-secondary);">05:02</span></td>
+        <td><span class="incident-title" style="font-size: 13px;">Failure rate increase</span></td>
+        <td><span class="incident-desc">The error rate increased to 100 %.Service domain mybobs.com has a failure rate increase.</span></td>
+        <td><span class="badge error">1 h 48 min min</span></td>
+      </tr>
+
+      <tr>
+        <td><strong style="color: #378add;">P-2605274</strong></td>
+        <td><span style="color: var(--color-text-secondary);">05:28</span></td>
+        <td><span class="incident-title" style="font-size: 13px;">Failure rate increase</span></td>
+        <td><span class="incident-desc">The error rate increased to 100 %.Endpoint https://az.services.mybobs.com/RESTAdapter/Hybris_OrderHistory has a failure rate increase.</span></td>
+        <td><span class="badge error">8 min</span></td>
+      </tr>
+
+      <tr>
+        <td><strong style="color: #378add;">P-2605275</strong></td>
+        <td><span style="color: var(--color-text-secondary);">05:39</span></td>
+        <td><span class="incident-title" style="font-size: 13px;">Failure rate increase</span></td>
+        <td><span class="incident-desc">The error rate increased to 100 %.Endpoint https://az.services.mybobs.com/RESTAdapter/Hybris-DeliveryCharge has a failure rate increase.</span></td>
+        <td><span class="badge error">7 min</span></td>
+      </tr>
+
+      <tr>
+        <td><strong style="color: #378add;">P-2605276</strong></td>
+        <td><span style="color: var(--color-text-secondary);">05:42</span></td>
+        <td><span class="incident-title" style="font-size: 13px;">Failure rate increase</span></td>
+        <td><span class="incident-desc">The error rate increased to 100 %.Endpoint https://az.services.mybobs.com/RESTAdapter/Hybris_OrderHistory has a failure rate increase.</span></td>
+        <td><span class="badge error">31 min</span></td>
+      </tr>
+
+      <tr>
+        <td><strong style="color: #378add;">P-2605277</strong></td>
+        <td><span style="color: var(--color-text-secondary);">05:48</span></td>
+        <td><span class="incident-title" style="font-size: 13px;">Failure rate increase</span></td>
+        <td><span class="incident-desc">The error rate increased to 100 %.Endpoint https://az.services.mybobs.com/RESTAdapter/Hybris_OmniChannel_Cart has a failure rate increase.</span></td>
+        <td><span class="badge error">9 min</span></td>
+      </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card col-4">
+    <h2>⚡ Lighthouse Production Performance Matrix</h2>
+    <div style="display: flex; flex-direction: column; gap: 12px; overflow-y: auto; max-height: 380px; padding-right: 4px;">
+
+
+      <div style="border-bottom: 1px solid var(--color-border-tertiary); padding-bottom: 10px;">
+        <div style="font-size: 12px; font-weight: 600; margin-bottom: 6px; color: #378add;">HP Mobile</div>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; text-align: center;">
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #e04a4a;">22</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">Perf</div>
+          </div>
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #378add;">80</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">Access</div>
+          </div>
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #9b59b6;">69</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">Best</div>
+          </div>
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #2ecc71;">77</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">SEO</div>
+          </div>
         </div>
       </div>
+
+      <div style="border-bottom: 1px solid var(--color-border-tertiary); padding-bottom: 10px;">
+        <div style="font-size: 12px; font-weight: 600; margin-bottom: 6px; color: #378add;">HP Desktop</div>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; text-align: center;">
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #e04a4a;">35</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">Perf</div>
+          </div>
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #378add;">78</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">Access</div>
+          </div>
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #9b59b6;">69</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">Best</div>
+          </div>
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #2ecc71;">77</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">SEO</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="border-bottom: 1px solid var(--color-border-tertiary); padding-bottom: 10px;">
+        <div style="font-size: 12px; font-weight: 600; margin-bottom: 6px; color: #378add;">HP without ABTasty Mobile</div>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; text-align: center;">
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #e04a4a;">21</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">Perf</div>
+          </div>
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #378add;">80</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">Access</div>
+          </div>
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #9b59b6;">69</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">Best</div>
+          </div>
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #2ecc71;">77</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">SEO</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="border-bottom: 1px solid var(--color-border-tertiary); padding-bottom: 10px;">
+        <div style="font-size: 12px; font-weight: 600; margin-bottom: 6px; color: #378add;">HP without ABTasty Desktop</div>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; text-align: center;">
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #e04a4a;">26</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">Perf</div>
+          </div>
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #378add;">82</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">Access</div>
+          </div>
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #9b59b6;">69</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">Best</div>
+          </div>
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #2ecc71;">77</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">SEO</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="border-bottom: 1px solid var(--color-border-tertiary); padding-bottom: 10px;">
+        <div style="font-size: 12px; font-weight: 600; margin-bottom: 6px; color: #378add;">PLP Mobile</div>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; text-align: center;">
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #e04a4a;">6</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">Perf</div>
+          </div>
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #378add;">73</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">Access</div>
+          </div>
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #9b59b6;">62</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">Best</div>
+          </div>
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #2ecc71;">77</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">SEO</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="border-bottom: 1px solid var(--color-border-tertiary); padding-bottom: 10px;">
+        <div style="font-size: 12px; font-weight: 600; margin-bottom: 6px; color: #378add;">PLP Desktop</div>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; text-align: center;">
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #e04a4a;">23</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">Perf</div>
+          </div>
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #378add;">76</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">Access</div>
+          </div>
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #9b59b6;">65</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">Best</div>
+          </div>
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #2ecc71;">77</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">SEO</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="border-bottom: 1px solid var(--color-border-tertiary); padding-bottom: 10px;">
+        <div style="font-size: 12px; font-weight: 600; margin-bottom: 6px; color: #378add;">PLP without ABTasty Mobile</div>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; text-align: center;">
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #e04a4a;">11</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">Perf</div>
+          </div>
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #378add;">73</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">Access</div>
+          </div>
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #9b59b6;">65</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">Best</div>
+          </div>
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #2ecc71;">77</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">SEO</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="border-bottom: 1px solid var(--color-border-tertiary); padding-bottom: 10px;">
+        <div style="font-size: 12px; font-weight: 600; margin-bottom: 6px; color: #378add;">PLP without ABTasty Desktop</div>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; text-align: center;">
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #e04a4a;">21</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">Perf</div>
+          </div>
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #378add;">78</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">Access</div>
+          </div>
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #9b59b6;">65</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">Best</div>
+          </div>
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #2ecc71;">77</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">SEO</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="border-bottom: 1px solid var(--color-border-tertiary); padding-bottom: 10px;">
+        <div style="font-size: 12px; font-weight: 600; margin-bottom: 6px; color: #378add;">PDP Mobile</div>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; text-align: center;">
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #e04a4a;">25</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">Perf</div>
+          </div>
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #378add;">79</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">Access</div>
+          </div>
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #9b59b6;">58</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">Best</div>
+          </div>
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #2ecc71;">77</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">SEO</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="border-bottom: 1px solid var(--color-border-tertiary); padding-bottom: 10px;">
+        <div style="font-size: 12px; font-weight: 600; margin-bottom: 6px; color: #378add;">PDP Desktop</div>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; text-align: center;">
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #e04a4a;">9</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">Perf</div>
+          </div>
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #378add;">82</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">Access</div>
+          </div>
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #9b59b6;">38</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">Best</div>
+          </div>
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #2ecc71;">77</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">SEO</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="border-bottom: 1px solid var(--color-border-tertiary); padding-bottom: 10px;">
+        <div style="font-size: 12px; font-weight: 600; margin-bottom: 6px; color: #378add;">PDP without ABTasty Mobile</div>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; text-align: center;">
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #e04a4a;">21</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">Perf</div>
+          </div>
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #378add;">79</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">Access</div>
+          </div>
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #9b59b6;">58</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">Best</div>
+          </div>
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #2ecc71;">77</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">SEO</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="border-bottom: 1px solid var(--color-border-tertiary); padding-bottom: 10px;">
+        <div style="font-size: 12px; font-weight: 600; margin-bottom: 6px; color: #378add;">PDP without ABTasty Desktop</div>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; text-align: center;">
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #e04a4a;">16</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">Perf</div>
+          </div>
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #378add;">82</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">Access</div>
+          </div>
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #9b59b6;">38</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">Best</div>
+          </div>
+          <div style="background: var(--color-background-secondary); padding: 4px; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: 700; color: #2ecc71;">77</div>
+            <div style="font-size: 9px; color: var(--color-text-tertiary);">SEO</div>
+          </div>
+        </div>
+      </div>
+
+
     </div>
   </div>
 
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
-  // 选项卡无缝切换逻辑
-  function switchTab(id, btn) {
-    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-    btn.classList.add('active');
-  }
+  const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const labelColor = isDarkMode ? '#aba9a2' : '#5f5e5a';
+  const gridColor = isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
 
-  // 动态注入并配置 Chart.js 图表
-  const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
-  const textColor = isDark ? '#b4b2a9' : '#5f5e5a';
-  const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+  // Deserialize injected Python chart metrics dynamically
+  const payLabels = JSON.parse('["WF", "visa", "Synchrony", "Paypal", "mastercard", "Klarna", "GiftCard", "Fortiva", "discover", "amex", "Affirm", "Acima"]');
+  const payCounts = JSON.parse('[54, 356, 59, 60, 161, 30, 4, 33, 39, 69, 40, 20]');
 
-  // 1. 支付网关订单占比饼图数据注入
-  const payLabels = {{ pay_labels | safe }};
-  const payCounts = {{ pay_counts | safe }};
-
-  new Chart(document.getElementById('payTypeChart'), {
-    type: 'pie',
+  new Chart(document.getElementById('paymentChart'), {
+    type: 'doughnut',
     data: {
       labels: payLabels,
       datasets: [{
         data: payCounts,
         backgroundColor: [
-          '#378ADD', '#EF9F27', '#534AB7', '#1D9E75', '#E24B4A',
-          '#70706e', '#A3E2CD', '#F7C1C1', '#BA7517', '#4A90E2',
-          '#F5A623', '#7ED321'
+          '#378add', '#2ecc71', '#e04a4a', '#e67e22', '#9b59b6',
+          '#16a085', '#2c3e50', '#f1c40f', '#bdc3c7', '#7f8c8d',
+          '#1abc9c', '#34495e'
         ],
-        borderWidth: 1,
-        borderColor: isDark ? '#1e1e1c' : '#ffffff'
+        borderWidth: 0
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { position: 'right', labels: { color: textColor, boxWidth: 12, font: { size: 11 } } }
-      }
-    }
-  });
-
-  // 2. 支付网关销售额贡献柱状图数据注入
-  const payRevs = {{ pay_revs | safe }};
-
-  new Chart(document.getElementById('payRevChart'), {
-    type: 'bar',
-    data: {
-      labels: payLabels,
-      datasets: [{
-        label: '营收 ($ Without Tax)',
-        data: payRevs,
-        backgroundColor: 'rgba(55, 138, 221, 0.85)',
-        borderRadius: 4
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { grid: { color: gridColor }, ticks: { color: textColor } },
-        y: { grid: { color: gridColor }, ticks: { color: textColor } }
+        legend: {
+          position: 'right',
+          labels: { color: labelColor, boxWidth: 12, font: { size: 10 } }
+        }
       }
     }
   });

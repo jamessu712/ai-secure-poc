@@ -21,4 +21,5 @@ pip install -r requirements.txt openai
 code .env
 
 python main.py
+python main1.py
 ```
