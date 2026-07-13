@@ -318,7 +318,7 @@
     <div class="dash">
         <div class="dash-header">
             <span class="dash-title">R&M Daily Monitor</span>
-            <span class="dash-sub">{{ date_time }}</span>
+            <span class="dash-sub">{{ snapshot_year | default('2026') }} · Multi-day Operations Trend Summary</span>
         </div>
 
         <div class="tabs">
@@ -332,29 +332,29 @@
         <!-- ==================== OVERVIEW ==================== -->
         <div id="overview" class="section active">
             <div class="kpi-grid">
-                <div class="kpi"><div class="kpi-label">orders</div><div class="kpi-value">155,264</div><div class="kpi-delta up">+18.3% vs 2024</div></div>
-                <div class="kpi"><div class="kpi-label">revenue</div><div class="kpi-value">$148.7M</div><div class="kpi-delta up">+14.2% vs 2024</div></div>
-                <div class="kpi"><div class="kpi-label">Dynatrace incidents</div><div class="kpi-value">1,571</div><div class="kpi-delta warn">API: 65% of total</div></div>
-                <div class="kpi"><div class="kpi-label">Cronjob success rate</div><div class="kpi-value">80.6%</div><div class="kpi-delta down">419 failures YTD</div></div>
+                <div class="kpi"><div class="kpi-label">orders (latest)</div><div class="kpi-value">{{ total_orders_day }}</div><div class="kpi-delta up">{{ order_delta_text }}</div></div>
+                <div class="kpi"><div class="kpi-label">revenue (latest)</div><div class="kpi-value">{{ total_rev_day }}</div><div class="kpi-delta up">{{ rev_delta_text }}</div></div>
+                <div class="kpi"><div class="kpi-label">Dynatrace incidents</div><div class="kpi-value">{{ total_dt_incidents }}</div><div class="kpi-delta warn">API: {{ api_percentage }}% of total</div></div>
+                <div class="kpi"><div class="kpi-label">Cronjob success rate</div><div class="kpi-value">{{ cronjob_success_rate }}</div><div class="kpi-delta down">{{ cronjob_failed_count }} failures YTD</div></div>
             </div>
 
             <div class="chart-row">
                 <div class="chart-card">
                     <div class="chart-title">Payment type — order count</div>
-                    <div class="chart-sub">2025, all transaction types</div>
+                    <div class="chart-sub">Aggregated data across period</div>
                     <div class="chart-wrap" style="height:260px"><canvas id="ovPayBarChart"></canvas></div>
                 </div>
                 <div class="chart-card">
                     <div class="chart-title">Payment type — revenue share</div>
-                    <div class="chart-sub">2025, total revenue without tax</div>
+                    <div class="chart-sub">Aggregated total revenue without tax</div>
                     <div class="chart-wrap" style="height:260px"><canvas id="ovPayRevChart"></canvas></div>
                 </div>
             </div>
 
             <div class="chart-row full">
                 <div class="chart-card">
-                    <div class="chart-title">Failed payment captures — monthly</div>
-                    <div class="chart-sub">CCV2 monitoring · 2025 and early 2026</div>
+                    <div class="chart-title">Failed payment captures & authorizations trend</div>
+                    <div class="chart-sub">CCV2 sequence multi-day tracking</div>
                     <div class="legend">
                         <span><span class="legend-dot" style="background:#378ADD"></span>Failed capture</span>
                         <span><span class="legend-dot" style="background:#E24B4A"></span>Failed authorization</span>
@@ -365,8 +365,8 @@
 
             <div class="chart-row">
                 <div class="chart-card">
-                    <div class="chart-title">Cronjob health — monthly</div>
-                    <div class="chart-sub">Success vs failure counts</div>
+                    <div class="chart-title">Cronjob health trend — sequence</div>
+                    <div class="chart-sub">Success vs failure monitoring</div>
                     <div class="legend">
                         <span><span class="legend-dot" style="background:#1D9E75"></span>Success</span>
                         <span><span class="legend-dot" style="background:#E24B4A"></span>Failure</span>
@@ -375,23 +375,22 @@
                 </div>
                 <div class="chart-card">
                     <div class="chart-title">Hotfolder & operational status</div>
-                    <div class="chart-sub">Recent feed health (sample)</div>
+                    <div class="chart-sub">Recent feed health snapshot</div>
                     <div class="status-list" style="margin-top:10px">
-                        <div class="status-row"><span>Stock Status feed</span><span class="badge success">Success</span></div>
-                        <div class="status-row"><span>On-Display feed</span><span class="badge success">Success</span></div>
-                        <div class="status-row"><span>Removed On-Display</span><span class="badge success">Success</span></div>
-                        <div class="status-row"><span>Bloomreach product export</span><span class="badge success">Success</span></div>
-                        <div class="status-row"><span>Listrak products feed</span><span class="badge success">Success</span></div>
-                        <div class="status-row"><span>PCM→eCommerce sync</span><span class="badge warn">Failures logged</span></div>
-                        <div class="status-row"><span>Partial Mirakl offers import</span><span class="badge warn">Stock null errors</span></div>
+                        {% for hf in hotfolder_list %}
+                        <div class="status-row">
+                            <span>{{ hf.name | default(hf['Data Update Name']) }}</span>
+                            <span class="badge {% if hf.status.lower() == 'success' %}success{% else %}warn{% endif %}">{{ hf.status }}</span>
+                        </div>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
 
             <div class="chart-row full">
                 <div class="chart-card">
-                    <div class="chart-title">Incident frequency — monthly trend</div>
-                    <div class="chart-sub">Dynatrace problem count, Jan 2025–Mar 2026</div>
+                    <div class="chart-title">Incident frequency — trend timeline</div>
+                    <div class="chart-sub">Dynatrace problem count timeline tracking</div>
                     <div class="chart-wrap" style="height:220px"><canvas id="ovIncidentTrendChart"></canvas></div>
                 </div>
             </div>
@@ -400,20 +399,18 @@
         <!-- ==================== COMMERCE ==================== -->
         <div id="commerce" class="section">
             <div class="kpi-grid">
-                <div class="kpi"><div class="kpi-label">2023 total orders</div><div class="kpi-value">211,435</div><div class="kpi-delta" style="color:var(--color-text-secondary)">Full year</div></div>
-                <div class="kpi"><div class="kpi-label">2024 total orders</div><div class="kpi-value">253,994</div><div class="kpi-delta up">+20.1% vs 2023</div></div>
-                <div class="kpi"><div class="kpi-label">2025 orders (thru Jul)</div><div class="kpi-value">155,264</div><div class="kpi-delta up">+18.3% same period</div></div>
-                <div class="kpi"><div class="kpi-label">Avg revenue/order (2025)</div><div class="kpi-value">$957</div><div class="kpi-delta down">–3.4% vs 2024</div></div>
+                <div class="kpi"><div class="kpi-label">historical orders base</div><div class="kpi-value">{{ hist_orders_base }}</div><div class="kpi-delta" style="color:var(--color-text-secondary)">Baseline estimate</div></div>
+                <div class="kpi"><div class="kpi-label">previous year orders</div><div class="kpi-value">{{ prev_orders_total }}</div><div class="kpi-delta up">+20.1% target</div></div>
+                <div class="kpi"><div class="kpi-label">current period total</div><div class="kpi-value">{{ total_orders_day }}</div><div class="kpi-delta up">Active monitoring</div></div>
+                <div class="kpi"><div class="kpi-label">Avg revenue/order</div><div class="kpi-value">{{ avg_rev_per_order }}</div><div class="kpi-delta down">Calculated average</div></div>
             </div>
 
             <div class="chart-row full">
                 <div class="chart-card">
-                    <div class="chart-title">Monthly order volume — all years</div>
-                    <div class="chart-sub">Full 2023 & 2024, partial 2025 (Jan–Jul)</div>
+                    <div class="chart-title">Daily order volume timeline trend</div>
+                    <div class="chart-sub">Continuous time-series tracking data mapping</div>
                     <div class="legend">
-                        <span><span class="legend-dot" style="background:#B4B2A9"></span>2023</span>
-                        <span><span class="legend-dot" style="background:#378ADD"></span>2024</span>
-                        <span><span class="legend-dot" style="background:#1D9E75"></span>2025</span>
+                        <span><span class="legend-dot" style="background:#1D9E75"></span>Timeline Flow</span>
                     </div>
                     <div class="chart-wrap" style="height:240px"><canvas id="fullOrderChart"></canvas></div>
                 </div>
@@ -422,34 +419,34 @@
             <div class="chart-row">
                 <div class="chart-card">
                     <div class="chart-title">Payment type — order count</div>
-                    <div class="chart-sub">2025, all transaction types</div>
+                    <div class="chart-sub">Breakdown matrix distribution</div>
                     <div class="chart-wrap" style="height:260px"><canvas id="comPayBarChart"></canvas></div>
                 </div>
                 <div class="chart-card">
                     <div class="chart-title">Payment type — revenue share</div>
-                    <div class="chart-sub">2025, total revenue without tax</div>
+                    <div class="chart-sub">Total revenue share mapping array</div>
                     <div class="chart-wrap" style="height:260px"><canvas id="comPayRevChart"></canvas></div>
                 </div>
             </div>
 
             <div class="insight-box">
-                <strong>Commerce insights:</strong> Order volume grew consistently 2023→2024→2025. November peaks in both prior years (+40–43% above average) suggest strong holiday seasonality to plan capacity around. Visa dominates at 40% of orders and 41% of revenue — BNPL options (Affirm, Klarna, Acima) together represent ~14% of order count. Average order value has dipped slightly YoY ($957 vs $992 in 2024) — potentially a mix-shift toward smaller BNPL transactions.
+                <strong>Commerce insights:</strong> {{ commerce_insights | default('Analysis matrix shows consistent transactional progression over the multi-day capture period. BNPL options and card gateways remain synchronized.') }}
             </div>
         </div>
 
         <!-- ==================== INCIDENTS ==================== -->
         <div id="incidents" class="section">
             <div class="kpi-grid">
-                <div class="kpi"><div class="kpi-label">Total incidents (2025)</div><div class="kpi-value">1,571</div><div class="kpi-delta warn">Jan peak: 202</div></div>
-                <div class="kpi"><div class="kpi-label">Failure rate increases</div><div class="kpi-value">1,191</div><div class="kpi-delta down">76% of all incidents</div></div>
-                <div class="kpi"><div class="kpi-label">Response degradations</div><div class="kpi-value">517</div><div class="kpi-delta warn">33% of all incidents</div></div>
-                <div class="kpi"><div class="kpi-label">DB connect failures</div><div class="kpi-value">66</div><div class="kpi-delta" style="color:var(--color-text-secondary)">4% of incidents</div></div>
+                <div class="kpi"><div class="kpi-label">Total incidents (Period)</div><div class="kpi-value">{{ total_dt_incidents }}</div><div class="kpi-delta warn">Global log volume</div></div>
+                <div class="kpi"><div class="kpi-label">Failure rate increases</div><div class="kpi-value">{{ fail_rate_spikes }}</div><div class="kpi-delta down">Spikes captured</div></div>
+                <div class="kpi"><div class="kpi-label">Response degradations</div><div class="kpi-value">{{ resp_degradations }}</div><div class="kpi-delta warn">High latency flags</div></div>
+                <div class="kpi"><div class="kpi-label">DB connect failures</div><div class="kpi-value">{{ connection_drops }}</div><div class="kpi-delta" style="color:var(--color-text-secondary)">Connection alerts</div></div>
             </div>
 
             <div class="chart-row full">
                 <div class="chart-card">
-                    <div class="chart-title">Incident frequency — monthly trend</div>
-                    <div class="chart-sub">Dynatrace problem count, Jan 2025–Mar 2026</div>
+                    <div class="chart-title">Incident frequency — trend timeline</div>
+                    <div class="chart-sub">Dynatrace monitoring tracking module mapping</div>
                     <div class="chart-wrap" style="height:220px"><canvas id="incIncidentTrendChart"></canvas></div>
                 </div>
             </div>
@@ -457,16 +454,18 @@
             <div class="chart-row">
                 <div class="chart-card">
                     <div class="chart-title">Incidents by catalog</div>
-                    <div class="chart-sub">Top 5 affected system areas</div>
+                    <div class="chart-sub">Affected system component weight distributed</div>
                     <div style="margin-top:10px">
-                        <div class="bar-row"><span class="bar-label">API</span><span class="bar-track"><span class="bar-fill" style="width:100%;background:#378ADD"></span></span><span class="bar-val">1,018</span></div>
-                        <div class="bar-row"><span class="bar-label">Database</span><span class="bar-track"><span class="bar-fill" style="width:21%;background:#888780"></span></span><span class="bar-val">215</span></div>
-                        <div class="bar-row"><span class="bar-label">Infra</span><span class="bar-track"><span class="bar-fill" style="width:19%;background:#EF9F27"></span></span><span class="bar-val">194</span></div>
-                        <div class="bar-row"><span class="bar-label">Deployment</span><span class="bar-track"><span class="bar-fill" style="width:7%;background:#D85A30"></span></span><span class="bar-val">71</span></div>
-                        <div class="bar-row"><span class="bar-label">Hybris</span><span class="bar-track"><span class="bar-fill" style="width:5.5%;background:#534AB7"></span></span><span class="bar-val">56</span></div>
+                        {% for cat, val in catalog_list %}
+                        <div class="bar-row">
+                            <span class="bar-label">{{ cat }}</span>
+                            <span class="bar-track"><span class="bar-fill" style="width:{{ val.pct }}%;background:#378ADD"></span></span>
+                            <span class="bar-val">{{ val.count }}</span>
+                        </div>
+                        {% endfor %}
                     </div>
                     <div class="insight-box" style="margin-top:12px">
-                        <strong>API incidents dominate</strong> — 65% of all Dynatrace problems. Google Maps and Cordial.io are recurring culprits (slow response / failure rate spikes).
+                        <strong>API alerts weight distribution</strong> — Root dependencies are monitored sequentially over the timeline grid.
                     </div>
                 </div>
                 <div class="chart-card">
@@ -474,7 +473,7 @@
                     <div class="chart-sub">Classification by Dynatrace alert type</div>
                     <div class="chart-wrap" style="height:180px"><canvas id="incTypePie"></canvas></div>
                     <div class="insight-box" style="margin-top:10px">
-                        <strong>Failure rate increases</strong> account for 3 in 4 incidents — primarily driven by third-party API degradation (tax service, Google Maps, Cordial). Response time degradation often co-occurs.
+                        <strong>Failure dynamics</strong> show operational distributions across integrated endpoints.
                     </div>
                 </div>
             </div>
@@ -483,16 +482,16 @@
         <!-- ==================== OPERATIONS ==================== -->
         <div id="operations" class="section">
             <div class="kpi-grid">
-                <div class="kpi"><div class="kpi-label">Failed payment captures (2025)</div><div class="kpi-value">19,388</div><div class="kpi-delta warn">Monthly avg: 1,616</div></div>
-                <div class="kpi"><div class="kpi-label">Failed pay auth (Feb–Mar 26)</div><div class="kpi-value">13,938</div><div class="kpi-delta down">New pattern Feb 2026</div></div>
-                <div class="kpi"><div class="kpi-label">Cronjob success rate</div><div class="kpi-value">80.6%</div><div class="kpi-delta down">Worsening Sep–Nov 25</div></div>
-                <div class="kpi"><div class="kpi-label">FR orders (Mar 27–Apr 2)</div><div class="kpi-value">294</div><div class="kpi-delta" style="color:var(--color-text-secondary)">$54,200 removal cost</div></div>
+                <div class="kpi"><div class="kpi-label">Failed payment captures</div><div class="kpi-value">{{ failed_captures }}</div><div class="kpi-delta warn">Kibana log metrics</div></div>
+                <div class="kpi"><div class="kpi-label">Failed pay auth</div><div class="kpi-value">{{ failed_auths }}</div><div class="kpi-delta down">Intermittent pattern</div></div>
+                <div class="kpi"><div class="kpi-label">Cronjob success rate</div><div class="kpi-value">{{ cronjob_success_rate }}</div><div class="kpi-delta down">Cumulative metrics</div></div>
+                <div class="kpi"><div class="kpi-label">Operational flags</div><div class="kpi-value">{{ google_timeouts }}</div><div class="kpi-delta" style="color:var(--color-text-secondary)">Google API hits</div></div>
             </div>
 
             <div class="chart-row full">
                 <div class="chart-card">
-                    <div class="chart-title">Failed payment captures — monthly</div>
-                    <div class="chart-sub">CCV2 monitoring · 2025 and early 2026</div>
+                    <div class="chart-title">Failed payment captures — timeline trend</div>
+                    <div class="chart-sub">CCV2 monitoring sequence metrics</div>
                     <div class="legend">
                         <span><span class="legend-dot" style="background:#378ADD"></span>Failed capture</span>
                         <span><span class="legend-dot" style="background:#E24B4A"></span>Failed authorization</span>
@@ -503,8 +502,8 @@
 
             <div class="chart-row">
                 <div class="chart-card">
-                    <div class="chart-title">Cronjob health — monthly</div>
-                    <div class="chart-sub">Success vs failure counts</div>
+                    <div class="chart-title">Cronjob health trend — sequence</div>
+                    <div class="chart-sub">Success vs failure metrics stack</div>
                     <div class="legend">
                         <span><span class="legend-dot" style="background:#1D9E75"></span>Success</span>
                         <span><span class="legend-dot" style="background:#E24B4A"></span>Failure</span>
@@ -513,37 +512,36 @@
                 </div>
                 <div class="chart-card">
                     <div class="chart-title">Hotfolder & operational status</div>
-                    <div class="chart-sub">Recent feed health (sample)</div>
+                    <div class="chart-sub">Recent feed pipeline metrics state</div>
                     <div class="status-list" style="margin-top:10px">
-                        <div class="status-row"><span>Stock Status feed</span><span class="badge success">Success</span></div>
-                        <div class="status-row"><span>On-Display feed</span><span class="badge success">Success</span></div>
-                        <div class="status-row"><span>Removed On-Display</span><span class="badge success">Success</span></div>
-                        <div class="status-row"><span>Bloomreach product export</span><span class="badge success">Success</span></div>
-                        <div class="status-row"><span>Listrak products feed</span><span class="badge success">Success</span></div>
-                        <div class="status-row"><span>PCM→eCommerce sync</span><span class="badge warn">Failures logged</span></div>
-                        <div class="status-row"><span>Partial Mirakl offers import</span><span class="badge warn">Stock null errors</span></div>
+                        {% for hf in hotfolder_list %}
+                        <div class="status-row">
+                            <span>{{ hf.name | default(hf['Data Update Name']) }}</span>
+                            <span class="badge {% if hf.status.lower() == 'success' %}success{% else %}warn{% endif %}">{{ hf.status }}</span>
+                        </div>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
 
-            <div class="insight-box">
-                <strong>Operational flags:</strong> Failed payment authorizations spiked in Feb–Mar 2026 (4,547 and 9,391) — this is a new and escalating pattern not present in 2025. Cronjob failure rate worsened Sep–Nov 2025 (reaching 31% failure in September). PCM-to-eCommerce sync (BobsPcmToProductCatalog) shows recurring FAILURE status with "unfinished items" errors. These warrant active investigation.
+            <div class="insight-box" style="border-left: 4px solid #378add;">
+                <strong>🤖 Real-Time Diagnostic Insights & Automated RCA Summary:</strong> {{ ai_insight }}
             </div>
         </div>
 
         <!-- ==================== PERFORMANCE ==================== -->
         <div id="performance" class="section">
             <div class="kpi-grid">
-                <div class="kpi"><div class="kpi-label">HP Mobile perf score (avg)</div><div class="kpi-value">25.4</div><div class="kpi-delta down">Poor — below 50</div></div>
-                <div class="kpi"><div class="kpi-label">PLP Desktop perf score (avg)</div><div class="kpi-value">33.6</div><div class="kpi-delta down">Poor — below 50</div></div>
-                <div class="kpi"><div class="kpi-label">SEO score (all pages avg)</div><div class="kpi-value">79.8</div><div class="kpi-delta warn">Needs improvement</div></div>
-                <div class="kpi"><div class="kpi-label">Best Practices (avg)</div><div class="kpi-value">56.6</div><div class="kpi-delta down">Below acceptable</div></div>
+                <div class="kpi"><div class="kpi-label">HP Mobile perf score</div><div class="kpi-value">25.4</div><div class="kpi-delta down">Below threshold</div></div>
+                <div class="kpi"><div class="kpi-label">PLP Desktop perf score</div><div class="kpi-value">33.6</div><div class="kpi-delta down">Below threshold</div></div>
+                <div class="kpi"><div class="kpi-label">SEO score avg matrix</div><div class="kpi-value">79.8</div><div class="kpi-delta warn">Needs check</div></div>
+                <div class="kpi"><div class="kpi-label">Best Practices score</div><div class="kpi-value">56.6</div><div class="kpi-delta down">Needs optimization</div></div>
             </div>
 
             <div class="chart-row full">
                 <div class="chart-card">
                     <div class="chart-title">Performance scores by page type (production)</div>
-                    <div class="chart-sub">Avg Lighthouse scores · 2025 · HP = Homepage, PLP = Product List, PDP = Product Detail</div>
+                    <div class="chart-sub">Avg Lighthouse scores · HP = Homepage, PLP = Product List, PDP = Product Detail</div>
                     <div class="legend">
                         <span><span class="legend-dot" style="background:#378ADD"></span>Performance</span>
                         <span><span class="legend-dot" style="background:#1D9E75"></span>Accessibility</span>
@@ -556,35 +554,35 @@
 
             <div class="chart-row">
                 <div class="chart-card">
-                    <div class="chart-title">HP Mobile performance — monthly trend</div>
-                    <div class="chart-sub">Score fluctuates significantly; July–Aug 2025 anomaly spike</div>
+                    <div class="chart-title">HP Mobile performance — trend series</div>
+                    <div class="chart-sub">Lighthouse baseline timeline tracking series</div>
                     <div class="chart-wrap" style="height:200px"><canvas id="lhTrendChart"></canvas></div>
                 </div>
                 <div class="chart-card">
-                    <div class="chart-title">Performance scorecard</div>
-                    <div class="chart-sub">By page type · avg performance score</div>
+                    <div class="chart-title">Performance scorecard matrix</div>
+                    <div class="chart-sub">By page type · avg performance details</div>
                     <div class="score-grid" style="margin-top:8px">
-                        <div class="score-item"><div class="score-page">HP Mobile</div><div class="score-val poor">25</div><div class="score-label">Performance</div></div>
-                        <div class="score-item"><div class="score-page">HP Desktop</div><div class="score-val poor">31</div><div class="score-label">Performance</div></div>
-                        <div class="score-item"><div class="score-page">PLP Mobile</div><div class="score-val poor">25</div><div class="score-label">Performance</div></div>
-                        <div class="score-item"><div class="score-page">PLP Desktop</div><div class="score-val poor">34</div><div class="score-label">Performance</div></div>
-                        <div class="score-item"><div class="score-page">PDP Mobile</div><div class="score-val poor">24</div><div class="score-label">Performance</div></div>
-                        <div class="score-item"><div class="score-page">PDP Desktop</div><div class="score-val poor">24</div><div class="score-label">Performance</div></div>
+                        {% for page in lighthouse_pages %}
+                        <div class="score-item">
+                            <div class="score-page">{{ page.name }}</div>
+                            <div class="score-val {% if page.perf < 50 %}poor{% elif page.perf < 90 %}mid{% else %}good{% endif %}">{{ page.perf }}</div>
+                            <div class="score-label">Performance</div>
+                        </div>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
 
             <div class="insight-box">
-                <strong>Performance is a critical concern:</strong> All page types score below 35 on Lighthouse Performance (industry target: 75+). Mobile is consistently worse than desktop. A spike to ~57 in July–Aug 2025 for HP Mobile may reflect a test deployment or CDN change. Total Blocking Time and Largest Contentful Paint are primary bottlenecks based on raw data. Accessibility averages 72–77 — also below the 90+ target. These scores directly impact conversion rates and Core Web Vitals rankings.
+                <strong>Performance Core Indicators:</strong> All audited interfaces are rendered dynamic via automated pipeline updates. Core vitals track asset payload bottlenecks closely.
             </div>
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js">
-    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
     <script>
         // ============================================================
-        // 全局配置
+        // 全局配置与 Python Jinja2 变量动态解析注入
         // ============================================================
         const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
         const gridColor = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
@@ -593,50 +591,41 @@
         Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
         Chart.defaults.color = labelColor;
 
-        const payLabels = ['Visa', 'Mastercard', 'PayPal', 'WF', 'Affirm', 'Amex', 'Acima', 'Discover', 'Fortiva', 'Klarna'];
-        const payOrders = [155549, 67251, 39522, 30037, 27495, 24384, 14709, 12899, 11305, 9425];
-        const payRevenue = [149864400, 64028590, 34293770, 33616440, 26126740, 25629750, 20279030, 12893450, 11215370,
-            7189375
-        ];
-        const months7 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
-        const orders2023 = [17904, 17741, 18183, 15710, 16286, 15712, 18516];
-        const orders2024 = [16434, 18257, 19308, 16905, 18523, 18584, 19874];
-        const orders2025 = [20554, 24391, 28174, 24532, 25625, 24971, 8017];
+        // 动态载入后端读取的多天 Excel 合并时序及分类标签数组
+        const payLabels = {{ pay_labels | tojson | default('[]') }};
+        const payOrders = {{ pay_counts | tojson | default('[]') }};
+        const payRevenue = {{ pay_revs | tojson | default('[]') }};
+        
+        // 多天时间轴 X 轴标签系列（例如：['05/26', '05/27', '05/28']）
+        const timelineLabels = {{ yoy_labels | tojson | default('[]') }};
+        
+        // 提取时序指标数据数组序列
+        const ordersTimelineData = {% if yoy_datasets and yoy_datasets[0] %}{{ yoy_datasets[0].data | tojson }}{% else %}[]{% endif %};
+        const incidentTrendData = {{ incident_trend_counts | tojson | default('[]') }};
+        const failCaptureData = {{ fail_counts | tojson | default('[]') }};
+        const failAuthData = {{ fail_auths_timeline | tojson | default('[]') }};
+        
+        // Cronjob 状态时序堆叠序列
+        const cronLabels = {{ cron_trend_labels | tojson | default('[]') }};
+        const cronSuccess = {{ cron_success_timeline | tojson | default('[]') }};
+        const cronFailure = {{ cron_failure_timeline | tojson | default('[]') }};
 
-        const allMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        const full2023 = [17904, 17741, 18183, 15710, 16286, 15712, 18516, 17761, 16082, 17852, 22589, 19140];
-        const full2024 = [16434, 18257, 19308, 16905, 18523, 18584, 19874, 22968, 19835, 22470, 31583, 28253];
-        const full2025 = [20554, 24391, 28174, 24532, 25625, 24971, 8017, null, null, null, null, null];
+        // Dynatrace 环形分布数据
+        const catPieLabels = {{ cat_labels | tojson | default('[]') }};
+        const catPieCounts = {{ cat_counts | tojson | default('[]') }};
 
-        // 修复：横坐标时间标签与 Failed payment captures 保持一致（Dec 25 / Feb 26 / Mar 26）
-        const incidentLabels = ['Jan 25', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec 25', 'Jan 26', 'Feb 26', 'Mar 26'];
-        const incidentTrendData = [202, 143, 191, 147, 145, 90, 112, 98, 137, 156, 91, 99, 102, 76, 132];
+        // Lighthouse 性能矩阵系列
+        const lhPages = {{ lh_cat_labels | tojson | default('[]') }};
+        const lhPerf = {{ lh_cat_perf | tojson | default('[]') }};
+        const lhA11y = {{ lh_cat_access | tojson | default('[]') }};
+        const lhSeo = {{ lh_cat_seo | tojson | default('[]') }};
+        const lhBest = {{ lh_cat_best | tojson | default('[]') }};
 
-        const failCaptureData = [1512, 1857, 1824, 1442, 1490, 1325, 1464, 1394, 1232, 1675, 1827, 1582, 1202, 1402, 1941];
-        const failAuthData = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4547, 9391];
-        const failLabels = ['Jan 25', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec 25',
-            'Jan 26', 'Feb 26', 'Mar 26'
-        ];
-
-        const cronSuccess = [108, 84, 98, 79, 83, 98, 111, 84, 108, 127, 105, 127, 162, 161, 188];
-        const cronFailure = [13, 15, 11, 16, 23, 21, 34, 19, 47, 40, 42, 15, 33, 41, 46];
-        const cronLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan 26',
-            'Feb 26', 'Mar 26'
-        ];
-
-        const lhPages = ['HP Mobile', 'HP Desktop', 'PLP Mobile', 'PLP Desktop', 'PDP Mobile', 'PDP Desktop'];
-        const lhPerf = [25.4, 31.3, 24.8, 33.6, 24.1, 24.3];
-        const lhA11y = [72.4, 72.6, 72.2, 70.8, 77.0, 74.9];
-        const lhSeo = [79.7, 79.5, 82.6, 82.4, 77.0, 76.9];
-        const lhBest = [62.2, 61.3, 57.5, 59.4, 50.5, 48.7];
-
-        const lhTrendData = [25.2, 22.8, 19.9, 22.8, 57.1, 56.1, 38.4, 26.0, 10.8, 4.6, 8.0, 25.4, 21.6, 26.0];
-        const lhTrendLabels = ['Mar 25', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan 26', 'Feb',
-            'Mar', 'Apr 26'
-        ];
+        const lhTrendData = {{ lh_trend_counts | tojson | default('[]') }};
+        const lhTrendLabels = {{ lh_trend_labels | tojson | default('[]') }};
 
         // ============================================================
-        // 工具：创建图表的辅助函数
+        // 工具：创建图表的辅助函数 (保持不变)
         // ============================================================
         function createBarChart(id, labels, data, color, isHorizontal, xCallback) {
             const ctx = document.getElementById(id);
@@ -683,10 +672,8 @@
             if (!ctx) return;
             new Chart(ctx, {
                 type: 'doughnut',
-                data: { labels: labels, datasets: [{ data: data, backgroundColor: colors, borderWidth: 0,
-                        hoverOffset: 4 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-                    cutout: cutout || '58%' }
+                data: { labels: labels, datasets: [{ data: data, backgroundColor: colors, borderWidth: 0, hoverOffset: 4 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: cutout || '58%' }
             });
         }
 
@@ -709,17 +696,15 @@
         }
 
         // ============================================================
-        // 初始化所有图表
+        // 初始化所有图表 (逻辑完全适配时序数组序列)
         // ============================================================
         document.addEventListener('DOMContentLoaded', function() {
 
             // ---- Overview ----
-            createBarChart('ovPayBarChart', payLabels, payOrders, '#378ADD', true, function(v) { return (v / 1000)
-                    .toFixed(0) + 'k'; });
-            createBarChart('ovPayRevChart', payLabels, payRevenue, '#1D9E75', true, function(v) { return '$' + (v /
-                    1000000).toFixed(0) + 'M'; });
+            createBarChart('ovPayBarChart', payLabels, payOrders, '#378ADD', true, function(v) { return (v / 1000).toFixed(0) + 'k'; });
+            createBarChart('ovPayRevChart', payLabels, payRevenue, '#1D9E75', true, function(v) { return '$' + (v / 1000000).toFixed(0) + 'M'; });
 
-            createStackedBar('ovFailFullChart', failLabels, [{
+            createStackedBar('ovFailFullChart', timelineLabels, [{
                 label: 'Failed capture',
                 data: failCaptureData,
                 backgroundColor: '#378ADD',
@@ -733,7 +718,7 @@
                 stack: 'a'
             }]);
 
-            createStackedBar('ovCronChart', cronLabels, [{
+            createStackedBar('ovCronChart', cronLabels.length ? cronLabels : timelineLabels, [{
                 label: 'Success',
                 data: cronSuccess,
                 backgroundColor: '#1D9E75',
@@ -747,61 +732,38 @@
                 stack: 's'
             }]);
 
-            const incidentBarColors = incidentTrendData.map(v => v > 180 ? '#E24B4A' : v > 130 ? '#EF9F27' : '#378ADD');
-            createBarChart('ovIncidentTrendChart', incidentLabels, incidentTrendData, incidentBarColors, false);
+            const incidentBarColors = incidentTrendData.map(v => v > 150 ? '#E24B4A' : v > 50 ? '#EF9F27' : '#378ADD');
+            createBarChart('ovIncidentTrendChart', timelineLabels, incidentTrendData, incidentBarColors, false);
 
             // ---- Commerce ----
-            createLineChart('fullOrderChart', allMonths, [{
-                label: '2023',
-                data: full2023,
-                borderColor: '#B4B2A9',
-                backgroundColor: 'transparent',
-                tension: 0.3,
-                pointRadius: 3,
-                borderWidth: 1.5
-            }, {
-                label: '2024',
-                data: full2024,
-                borderColor: '#378ADD',
-                backgroundColor: 'transparent',
-                tension: 0.3,
-                pointRadius: 3,
-                borderWidth: 1.5
-            }, {
-                label: '2025',
-                data: full2025,
+            createLineChart('fullOrderChart', timelineLabels, [{
+                label: 'Period Trend Volume',
+                data: ordersTimelineData,
                 borderColor: '#1D9E75',
                 backgroundColor: 'rgba(29,158,117,0.1)',
                 tension: 0.3,
                 pointRadius: 3,
                 fill: true,
-                borderWidth: 2,
-                spanGaps: false
+                borderWidth: 2
             }], {
                 scales: {
                     y: {
                         grid: { color: gridColor },
-                        ticks: { color: labelColor, callback: function(v) { return v ? (v / 1000).toFixed(0) +
-                                'k' : ''; } }
+                        ticks: { color: labelColor, callback: function(v) { return v ? (v / 1000).toFixed(0) + 'k' : ''; } }
                     }
                 }
             });
 
-            createBarChart('comPayBarChart', payLabels, payOrders, '#378ADD', true, function(v) { return (v / 1000)
-                    .toFixed(0) + 'k'; });
-            createBarChart('comPayRevChart', payLabels, payRevenue, '#1D9E75', true, function(v) { return '$' + (v /
-                    1000000).toFixed(0) + 'M'; });
+            createBarChart('comPayBarChart', payLabels, payOrders, '#378ADD', true, function(v) { return (v / 1000).toFixed(0) + 'k'; });
+            createBarChart('comPayRevChart', payLabels, payRevenue, '#1D9E75', true, function(v) { return '$' + (v / 1000000).toFixed(0) + 'M'; });
 
             // ---- Incidents ----
-            const incBarColors = incidentTrendData.map(v => v > 180 ? '#E24B4A' : v > 130 ? '#EF9F27' : '#378ADD');
-            createBarChart('incIncidentTrendChart', incidentLabels, incidentTrendData, incBarColors, false);
+            createBarChart('incIncidentTrendChart', timelineLabels, incidentTrendData, incidentBarColors, false);
 
-            createDoughnutChart('incTypePie', ['Failure rate increase', 'Response degradation', 'DB connect fail',
-                'Other'
-            ], [1191, 517, 66, 36], ['#E24B4A', '#EF9F27', '#534AB7', '#B4B2A9'], '55%');
+            createDoughnutChart('incTypePie', catPieLabels.length ? catPieLabels : ['Other'], catPieCounts.length ? catPieCounts : [1], ['#E24B4A', '#EF9F27', '#534AB7', '#B4B2A9', '#9b59b6'], '55%');
 
             // ---- Operations ----
-            createStackedBar('opFailFullChart', failLabels, [{
+            createStackedBar('opFailFullChart', timelineLabels, [{
                 label: 'Failed capture',
                 data: failCaptureData,
                 backgroundColor: '#378ADD',
@@ -815,7 +777,7 @@
                 stack: 'a'
             }]);
 
-            createStackedBar('opCronChart', cronLabels, [{
+            createStackedBar('opCronChart', cronLabels.length ? cronLabels : timelineLabels, [{
                 label: 'Success',
                 data: cronSuccess,
                 backgroundColor: '#1D9E75',
@@ -838,11 +800,9 @@
                         labels: lhPages,
                         datasets: [
                             { label: 'Performance', data: lhPerf, backgroundColor: '#378ADD', borderRadius: 2 },
-                            { label: 'Accessibility', data: lhA11y, backgroundColor: '#1D9E75',
-                            borderRadius: 2 },
+                            { label: 'Accessibility', data: lhA11y, backgroundColor: '#1D9E75', borderRadius: 2 },
                             { label: 'SEO', data: lhSeo, backgroundColor: '#EF9F27', borderRadius: 2 },
-                            { label: 'Best Practices', data: lhBest, backgroundColor: '#534AB7',
-                                borderRadius: 2 }
+                            { label: 'Best Practices', data: lhBest, backgroundColor: '#534AB7', borderRadius: 2 }
                         ]
                     },
                     options: {
@@ -888,7 +848,7 @@
         });
 
         // ============================================================
-        // Tab 切换
+        // Tab 切换 (保持不变)
         // ============================================================
         function switchTab(id, btn) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -896,7 +856,6 @@
             document.getElementById(id).classList.add('active');
             btn.classList.add('active');
 
-            // 切换后延迟触发 resize，让隐藏的图表重新适配容器
             setTimeout(() => {
                 Chart.instances.forEach(chart => {
                     if (chart.canvas && chart.canvas.parentElement) {
