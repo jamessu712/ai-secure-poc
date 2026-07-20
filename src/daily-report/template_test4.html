@@ -8,11 +8,7 @@
         /* ===== 完整样式（与原 test4.html 完全一致） ===== */
         *,
         *::before,
-        *::after {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
             --color-background-primary: #ffffff;
             --color-background-secondary: #f5f5f3;
@@ -20,12 +16,11 @@
             --color-text-primary: #1a1a18;
             --color-text-secondary: #5f5e5a;
             --color-text-tertiary: #888780;
-            --color-border-tertiary: rgba(0, 0, 0, 0.12);
-            --color-border-secondary: rgba(0, 0, 0, 0.22);
+            --color-border-tertiary: rgba(0,0,0,0.12);
+            --color-border-secondary: rgba(0,0,0,0.22);
             --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             --border-radius-md: 8px;
             --border-radius-lg: 12px;
-
             --color-success: #1D9E75;
             --color-success-bg: #E1F5EE;
             --color-muted-bg: #f9f9f7;
@@ -38,9 +33,8 @@
                 --color-text-primary: #f0efe9;
                 --color-text-secondary: #b4b2a9;
                 --color-text-tertiary: #888780;
-                --color-border-tertiary: rgba(255, 255, 255, 0.10);
-                --color-border-secondary: rgba(255, 255, 255, 0.20);
-
+                --color-border-tertiary: rgba(255,255,255,0.10);
+                --color-border-secondary: rgba(255,255,255,0.20);
                 --color-success: #9FE1CB;
                 --color-success-bg: #085041;
                 --color-muted-bg: #222220;
@@ -53,12 +47,7 @@
             min-height: 100vh;
             padding: 24px;
         }
-        .dash {
-            max-width: 960px;
-            margin: 0;
-            padding: 0 16px;
-        }
-
+        .dash { max-width: 960px; margin: 0; padding: 0 16px; }
         .dash-header-wrap {
             background: var(--color-background-primary);
             border: 0.5px solid var(--color-border-tertiary);
@@ -76,21 +65,9 @@
             padding-bottom: 12px;
             margin-bottom: 14px;
         }
-        .dash-title-group {
-            display: flex;
-            align-items: baseline;
-            gap: 10px;
-        }
-        .dash-title {
-            font-size: 20px;
-            font-weight: 600;
-            color: var(--color-text-primary);
-        }
-        .dash-sub {
-            font-size: 13px;
-            color: var(--color-text-secondary);
-        }
-
+        .dash-title-group { display: flex; align-items: baseline; gap: 10px; }
+        .dash-title { font-size: 20px; font-weight: 600; color: var(--color-text-primary); }
+        .dash-sub { font-size: 13px; color: var(--color-text-secondary); }
         .summary-box {
             display: grid;
             grid-template-columns: 1.2fr 1fr;
@@ -116,16 +93,9 @@
             font-size: 13px;
             margin-bottom: 6px;
         }
-        .sum-row:last-child {
-            margin-bottom: 0;
-        }
-        .sum-label {
-            color: var(--color-text-secondary);
-        }
-        .sum-val {
-            font-weight: 500;
-        }
-
+        .sum-row:last-child { margin-bottom: 0; }
+        .sum-label { color: var(--color-text-secondary); }
+        .sum-val { font-weight: 500; }
         .sum-change-badge {
             display: inline-flex;
             align-items: center;
@@ -138,16 +108,8 @@
             border-radius: 4px;
             margin-left: 6px;
         }
-        .sum-change-badge::before {
-            content: "↑";
-        }
-
-        @media (max-width: 640px) {
-            .summary-box {
-                grid-template-columns: 1fr;
-            }
-        }
-
+        .sum-change-badge::before { content: "↑"; }
+        @media (max-width: 640px) { .summary-box { grid-template-columns: 1fr; } }
         .tabs {
             display: flex;
             gap: 0;
@@ -173,15 +135,9 @@
             border-bottom: 2px solid var(--color-text-primary);
             font-weight: 500;
         }
-        .tab:hover:not(.active) {
-            color: var(--color-text-primary);
-        }
-        .section {
-            display: none;
-        }
-        .section.active {
-            display: block;
-        }
+        .tab:hover:not(.active) { color: var(--color-text-primary); }
+        .section { display: none; }
+        .section.active { display: block; }
         .kpi-grid {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -200,34 +156,18 @@
             text-transform: uppercase;
             letter-spacing: 0.3px;
         }
-        .kpi-value {
-            font-size: 22px;
-            font-weight: 500;
-            color: var(--color-text-primary);
-            line-height: 1;
-        }
-        .kpi-delta {
-            font-size: 12px;
-            margin-top: 4px;
-        }
-        .kpi-delta.up {
-            color: #1D9E75;
-        }
-        .kpi-delta.down {
-            color: #E24B4A;
-        }
-        .kpi-delta.warn {
-            color: #BA7517;
-        }
+        .kpi-value { font-size: 22px; font-weight: 500; color: var(--color-text-primary); line-height: 1; }
+        .kpi-delta { font-size: 12px; margin-top: 4px; }
+        .kpi-delta.up { color: #1D9E75; }
+        .kpi-delta.down { color: #E24B4A; }
+        .kpi-delta.warn { color: #BA7517; }
         .chart-row {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 14px;
             margin-bottom: 14px;
         }
-        .chart-row.full {
-            grid-template-columns: 1fr;
-        }
+        .chart-row.full { grid-template-columns: 1fr; }
         .chart-card {
             background: var(--color-background-primary);
             border: 0.5px solid var(--color-border-tertiary);
@@ -235,17 +175,8 @@
             padding: 14px 16px;
             width: 100%;
         }
-        .chart-title {
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--color-text-primary);
-            margin-bottom: 4px;
-        }
-        .chart-sub {
-            font-size: 11px;
-            color: var(--color-text-secondary);
-            margin-bottom: 12px;
-        }
+        .chart-title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 4px; }
+        .chart-sub { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 12px; }
         .legend {
             display: flex;
             flex-wrap: wrap;
@@ -254,27 +185,10 @@
             font-size: 12px;
             color: var(--color-text-secondary);
         }
-        .legend span {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .legend-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 2px;
-            flex-shrink: 0;
-        }
-        .chart-wrap {
-            position: relative;
-            width: 100%;
-            min-height: 200px;
-        }
-        .status-list {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
+        .legend span { display: flex; align-items: center; gap: 5px; }
+        .legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+        .chart-wrap { position: relative; width: 100%; min-height: 200px; }
+        .status-list { display: flex; flex-direction: column; gap: 6px; }
         .status-row {
             display: flex;
             align-items: center;
@@ -290,41 +204,18 @@
             border-radius: 20px;
             font-weight: 500;
         }
-        .badge.success {
-            background: #E1F5EE;
-            color: #085041;
-        }
-        .badge.warn {
-            background: #FAEEDA;
-            color: #633806;
-        }
-        .badge.error {
-            background: #FCEBEB;
-            color: #501313;
-        }
+        .badge.success { background: #E1F5EE; color: #085041; }
+        .badge.warn { background: #FAEEDA; color: #633806; }
+        .badge.error { background: #FCEBEB; color: #501313; }
         @media (prefers-color-scheme: dark) {
-            .badge.success {
-                background: #085041;
-                color: #9FE1CB;
-            }
-            .badge.warn {
-                background: #633806;
-                color: #FAC775;
-            }
-            .badge.error {
-                background: #501313;
-                color: #F7C1C1;
-            }
+            .badge.success { background: #085041; color: #9FE1CB; }
+            .badge.warn { background: #633806; color: #FAC775; }
+            .badge.error { background: #501313; color: #F7C1C1; }
         }
         @media (max-width: 640px) {
-            .kpi-grid {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-            .chart-row {
-                grid-template-columns: 1fr;
-            }
+            .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .chart-row { grid-template-columns: 1fr; }
         }
-
         .insight-box {
             background: var(--color-background-secondary);
             border-radius: var(--border-radius-md);
@@ -339,9 +230,7 @@
             margin-bottom: 8px;
             font-size: 12px;
         }
-        .bar-label {
-            width: 80px;
-        }
+        .bar-label { width: 80px; }
         .bar-track {
             flex-grow: 1;
             background: var(--color-background-tertiary);
@@ -350,15 +239,8 @@
             margin: 0 10px;
             overflow: hidden;
         }
-        .bar-fill {
-            display: block;
-            height: 100%;
-        }
-        .bar-val {
-            width: 40px;
-            text-align: right;
-        }
-
+        .bar-fill { display: block; height: 100%; }
+        .bar-val { width: 40px; text-align: right; }
         .table-wrap {
             width: 100%;
             overflow-x: auto;
@@ -367,9 +249,8 @@
             border: 0.5px solid var(--color-border-tertiary);
             border-radius: var(--border-radius-md);
             background: var(--color-background-primary);
-            box-shadow: inset -10px 0 10px -10px rgba(0, 0, 0, 0.15);
+            box-shadow: inset -10px 0 10px -10px rgba(0,0,0,0.15);
         }
-
         table {
             width: 100%;
             border-collapse: separate;
@@ -377,29 +258,20 @@
             font-size: 11px;
             text-align: right;
         }
-
-        th,
-        td {
+        th, td {
             padding: 8px 10px;
             border-bottom: 0.5px solid var(--color-border-tertiary);
             border-right: 0.5px solid var(--color-border-tertiary);
             white-space: nowrap;
             min-width: 75px;
         }
-
-        th:last-child,
-        td:last-child {
-            border-right: none;
-        }
-
+        th:last-child, td:last-child { border-right: none; }
         th {
             font-weight: 600;
             background: var(--color-background-secondary);
             color: var(--color-text-secondary);
         }
-
-        th:first-child,
-        td:first-child {
+        th:first-child, td:first-child {
             text-align: left;
             position: -webkit-sticky;
             position: sticky;
@@ -407,67 +279,30 @@
             background: var(--color-background-primary) !important;
             font-weight: 600;
             z-index: 2;
-            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.08);
+            box-shadow: 2px 0 5px rgba(0,0,0,0.08);
             min-width: 85px;
         }
-
-        th:first-child {
-            background: var(--color-background-secondary) !important;
-        }
-
-        .text-left {
-            text-align: left !important;
-        }
-        .text-center {
-            text-align: center !important;
-        }
-
-        .total-row {
-            font-weight: 700;
-            background: var(--color-background-secondary);
-        }
-
+        th:first-child { background: var(--color-background-secondary) !important; }
+        .text-left { text-align: left !important; }
+        .text-center { text-align: center !important; }
+        .total-row { font-weight: 700; background: var(--color-background-secondary); }
         .total-row td {
             border-top: 1px double var(--color-border-secondary);
             background: var(--color-background-secondary) !important;
         }
-
-        .table-wrap::-webkit-scrollbar {
-            height: 6px;
-        }
-        .table-wrap::-webkit-scrollbar-track {
-            background: var(--color-background-tertiary);
-            border-radius: 3px;
-        }
-        .table-wrap::-webkit-scrollbar-thumb {
-            background: var(--color-text-tertiary);
-            border-radius: 3px;
-        }
-        .table-wrap::-webkit-scrollbar-thumb:hover {
-            background: var(--color-text-secondary);
-        }
-
-        .val-warn {
-            color: #BA7517;
-            font-weight: 600;
-        }
-        .val-error {
-            color: #E24B4A;
-            font-weight: 600;
-        }
-        .val-success {
-            color: #1D9E75;
-            font-weight: 600;
-        }
-        .val-muted {
-            color: var(--color-text-tertiary);
-        }
+        .table-wrap::-webkit-scrollbar { height: 6px; }
+        .table-wrap::-webkit-scrollbar-track { background: var(--color-background-tertiary); border-radius: 3px; }
+        .table-wrap::-webkit-scrollbar-thumb { background: var(--color-text-tertiary); border-radius: 3px; }
+        .table-wrap::-webkit-scrollbar-thumb:hover { background: var(--color-text-secondary); }
+        .val-warn { color: #BA7517; font-weight: 600; }
+        .val-error { color: #E24B4A; font-weight: 600; }
+        .val-success { color: #1D9E75; font-weight: 600; }
+        .val-muted { color: var(--color-text-tertiary); }
     </style>
 </head>
 <body>
-<!-- ===== 页面内容（与之前提供的模板主体完全相同） ===== -->
 <div class="dash">
-    <!-- 标题和摘要 -->
+    <!-- 标题与摘要 -->
     <div class="dash-header-wrap">
         <div class="dash-header">
             <div class="dash-title-group">
@@ -481,11 +316,11 @@
                 <div class="sum-card-title">Overall Trend ({{ date_labels|first }} → {{ date_labels|last }})</div>
                 <div class="sum-row">
                     <span class="sum-label">Order Count</span>
-                    <span class="sum-val">{{ order_table_rows[-2]['date'] }}: {{ order_table_rows[-2]|sum(attribute=payment_order)|int }} → {{ order_table_rows[-1]['date'] }}: {{ order_table_rows[-1]|sum(attribute=payment_order)|int }}</span>
+                    <span class="sum-val">{{ order_table_rows[-2].date }}: {{ order_table_rows[-2].total }} → {{ order_table_rows[-1].date }}: {{ order_table_rows[-1].total }}</span>
                 </div>
                 <div class="sum-row" style="margin-top: 8px;">
                     <span class="sum-label">Order Revenue</span>
-                    <span class="sum-val">${{ "%.2f"|format(revenue_table_rows[-2]|sum(attribute=payment_order)) }} → ${{ "%.2f"|format(revenue_table_rows[-1]|sum(attribute=payment_order)) }}</span>
+                    <span class="sum-val">{{ revenue_table_rows[-2].total }} → {{ revenue_table_rows[-1].total }}</span>
                 </div>
             </div>
             <div class="sum-card">
@@ -501,12 +336,11 @@
         <button class="tab active" onclick="switchTab('overview', this)">Overview</button>
     </div>
 
-    <!-- Overview 内容（与之前模板完全相同，包含所有表格和图表） -->
     <div id="overview" class="section active">
         <!-- KPI -->
         <div class="kpi-grid">
-            <div class="kpi"><div class="kpi-label">Payment type — order count</div><div class="kpi-value">{{ grand_total_orders }}</div><div class="kpi-delta up">Grand Total</div></div>
-            <div class="kpi"><div class="kpi-label">Payment type — revenue share</div><div class="kpi-value">${{ "%.2f"|format(grand_total_rev) }}</div><div class="kpi-delta up">${{ "%.2f"|format(grand_total_rev) }}</div></div>
+            <div class="kpi"><div class="kpi-label">Payment type — order count</div><div class="kpi-value">{{ grand_total_orders_fmt }}</div><div class="kpi-delta up">Grand Total</div></div>
+            <div class="kpi"><div class="kpi-label">Payment type — revenue share</div><div class="kpi-value">{{ grand_total_rev_fmt }}</div><div class="kpi-delta up">{{ grand_total_rev_fmt }}</div></div>
             <div class="kpi"><div class="kpi-label">Dynatrace incidents</div><div class="kpi-value">{{ total_dt_incidents }}</div><div class="kpi-delta warn">API: {{ api_percentage }}% of total</div></div>
             <div class="kpi"><div class="kpi-label">Cronjob success rate</div><div class="kpi-value">{{ cronjob_success_rate }}</div><div class="kpi-delta down">{{ cronjob_failed_count }} failures YTD</div></div>
         </div>
@@ -524,7 +358,7 @@
                         <tr {% if loop.last %}class="total-row"{% endif %}>
                             <td>{{ row.date }}</td>
                             {% for pt in payment_order %}<td>{{ row[pt] }}</td>{% endfor %}
-                            <td>{{ row|sum(attribute=payment_order)|int }}</td>
+                            <td>{{ row.total }}</td>
                         </tr>
                         {% endfor %}
                         </tbody>
@@ -532,7 +366,7 @@
                 </div>
             </div>
         </div>
-        <!-- 1. 图表 -->
+        <!-- 图表 -->
         <div class="chart-row full">
             <div class="chart-card">
                 <div class="legend" id="ovPayBarLegend"></div>
@@ -552,8 +386,8 @@
                         {% for row in revenue_table_rows %}
                         <tr {% if loop.last %}class="total-row"{% endif %}>
                             <td>{{ row.date }}</td>
-                            {% for pt in payment_order %}<td>${{ "%.2f"|format(row[pt]) }}</td>{% endfor %}
-                            <td>${{ "%.2f"|format(row|sum(attribute=payment_order)) }}</td>
+                            {% for pt in payment_order %}<td>{{ row[pt] }}</td>{% endfor %}
+                            <td>{{ row.total }}</td>
                         </tr>
                         {% endfor %}
                         </tbody>
@@ -561,7 +395,7 @@
                 </div>
             </div>
         </div>
-        <!-- 2. 图表 -->
+        <!-- 图表 -->
         <div class="chart-row full">
             <div class="chart-card">
                 <div class="legend" id="ovPayRevLegend"></div>
@@ -576,9 +410,7 @@
                 <div class="chart-sub">{{ date_labels|last }} · System log metrics &amp; alerts</div>
                 <div class="table-wrap" style="margin-bottom:0;">
                     <table>
-                        <thead>
-                        <tr><th>Date</th><th>All Services Status</th><th>Cordial Rate Limit</th><th>Cordial Email Fail</th><th>Email Server Busy</th><th>Versatile API TO</th><th>Zip→Zone API</th><th>Zip→Delivery API</th><th>ECC Update Product</th><th>Invalid Variant</th><th>Affirm Void</th><th>Affirm Auth Issues</th><th>Failed Capture</th><th>Failed Auth</th><th>Google API TO</th><th>Delivery Zip</th><th>Vertex Fallback</th></tr>
-                        </thead>
+                        <thead><tr><th>Date</th><th>All Services Status</th><th>Cordial Rate Limit</th><th>Cordial Email Fail</th><th>Email Server Busy</th><th>Versatile API TO</th><th>Zip→Zone API</th><th>Zip→Delivery API</th><th>ECC Update Product</th><th>Invalid Variant</th><th>Affirm Void</th><th>Affirm Auth Issues</th><th>Failed Capture</th><th>Failed Auth</th><th>Google API TO</th><th>Delivery Zip</th><th>Vertex Fallback</th></tr></thead>
                         <tbody>
                         {% for row in kibana_table_rows %}
                         <tr>
@@ -639,7 +471,7 @@
             </div>
         </div>
 
-        <!-- 5. Cronjob Health -->
+        <!-- 5. Cronjob -->
         <div class="chart-row full">
             <div class="chart-card">
                 <div class="chart-title">5. Other Chron Jobs – Daily execution status</div>
@@ -744,7 +576,7 @@
             </div>
         </div>
 
-        <!-- 9. FR-orders 表格 + 图表 -->
+        <!-- 9. FR-orders -->
         <div class="chart-row full">
             <div class="chart-card">
                 <div class="chart-title">9. Furniture Removal (FR) order count</div>
@@ -754,7 +586,7 @@
                         <thead><tr><th class="text-center">Date</th><th>FR Order Count</th><th>Removal Service Cost Sum</th></tr></thead>
                         <tbody>
                         {% for i in range(fr_dates|length) %}
-                        <tr><td class="text-center">{{ fr_dates[i] }}</td><td>{{ fr_orders[i] }}</td><td>${{ fr_costs[i] }}</td></tr>
+                        <tr><td class="text-center">{{ fr_dates[i] }}</td><td>{{ fr_orders[i] }}</td><td>{{ fr_costs[i] }}</td></tr>
                         {% endfor %}
                         </tbody>
                     </table>
@@ -843,10 +675,9 @@
     </div><!-- /overview -->
 </div><!-- /.dash -->
 
-<!-- Chart.js 及脚本 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
-    // ===== 与之前提供的脚本完全相同 =====
+    // ===== 图表脚本（与之前相同，但使用动态变量） =====
     const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
     const gridColor = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
     const labelColor = '#888780';
