@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>R&M Daily Monitor Dashboard</title>
+    <style>
+        /* ===== 完整样式（与原 test4.html 完全一致） ===== */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        :root {
+            --color-background-primary: #ffffff;
+            --color-background-secondary: #f5f5f3;
+            --color-background-tertiary: #eeede8;
+            --color-text-primary: #1a1a18;
+            --color-text-secondary: #5f5e5a;
+            --color-text-tertiary: #888780;
+            --color-border-tertiary: rgba(0, 0, 0, 0.12);
+            --color-border-secondary: rgba(0, 0, 0, 0.22);
+            --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --border-radius-md: 8px;
+            --border-radius-lg: 12px;
+
+            --color-success: #1D9E75;
+            --color-success-bg: #E1F5EE;
+            --color-muted-bg: #f9f9f7;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --color-background-primary: #1e1e1c;
+                --color-background-secondary: #2a2a28;
+                --color-background-tertiary: #111110;
+                --color-text-primary: #f0efe9;
+                --color-text-secondary: #b4b2a9;
+                --color-text-tertiary: #888780;
+                --color-border-tertiary: rgba(255, 255, 255, 0.10);
+                --color-border-secondary: rgba(255, 255, 255, 0.20);
+
+                --color-success: #9FE1CB;
+                --color-success-bg: #085041;
+                --color-muted-bg: #222220;
+            }
+        }
+        body {
+            font-family: var(--font-sans);
+            background: var(--color-background-tertiary);
+            color: var(--color-text-primary);
+            min-height: 100vh;
+            padding: 24px;
+        }
+        .dash {
+            max-width: 960px;
+            margin: 0;
+            padding: 0 16px;
+        }
+
+        .dash-header-wrap {
+            background: var(--color-background-primary);
+            border: 0.5px solid var(--color-border-tertiary);
+            border-radius: var(--border-radius-lg);
+            padding: 20px;
+            margin-bottom: 1.25rem;
+        }
+        .dash-header {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            border-bottom: 0.5px solid var(--color-border-tertiary);
+            padding-bottom: 12px;
+            margin-bottom: 14px;
+        }
+        .dash-title-group {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+        }
+        .dash-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--color-text-primary);
+        }
+        .dash-sub {
+            font-size: 13px;
+            color: var(--color-text-secondary);
+        }
+
+        .summary-box {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 16px;
+        }
+        .sum-card {
+            background: var(--color-muted-bg);
+            border-radius: var(--border-radius-md);
+            padding: 12px 14px;
+        }
+        .sum-card-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--color-text-secondary);
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .sum-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+        .sum-row:last-child {
+            margin-bottom: 0;
+        }
+        .sum-label {
+            color: var(--color-text-secondary);
+        }
+        .sum-val {
+            font-weight: 500;
+        }
+
+        .sum-change-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--color-success);
+            background: var(--color-success-bg);
+            padding: 1px 6px;
+            border-radius: 4px;
+            margin-left: 6px;
+        }
+        .sum-change-badge::before {
+            content: "↑";
+        }
+
+        @media (max-width: 640px) {
+            .summary-box {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 0.5px solid var(--color-border-tertiary);
+            margin-bottom: 1.25rem;
+            overflow-x: auto;
+        }
+        .tab {
+            font-size: 13px;
+            font-weight: 400;
+            color: var(--color-text-secondary);
+            padding: 8px 14px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            white-space: nowrap;
+            background: none;
+            border-top: none;
+            border-left: none;
+            border-right: none;
+        }
+        .tab.active {
+            color: var(--color-text-primary);
+            border-bottom: 2px solid var(--color-text-primary);
+            font-weight: 500;
+        }
+        .tab:hover:not(.active) {
+            color: var(--color-text-primary);
+        }
+        .section {
+            display: none;
+        }
+        .section.active {
+            display: block;
+        }
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 1.25rem;
+        }
+        .kpi {
+            background: var(--color-background-secondary);
+            border-radius: var(--border-radius-md);
+            padding: 14px 16px;
+        }
+        .kpi-label {
+            font-size: 11px;
+            color: var(--color-text-secondary);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .kpi-value {
+            font-size: 22px;
+            font-weight: 500;
+            color: var(--color-text-primary);
+            line-height: 1;
+        }
+        .kpi-delta {
+            font-size: 12px;
+            margin-top: 4px;
+        }
+        .kpi-delta.up {
+            color: #1D9E75;
+        }
+        .kpi-delta.down {
+            color: #E24B4A;
+        }
+        .kpi-delta.warn {
+            color: #BA7517;
+        }
+        .chart-row {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+        .chart-row.full {
+            grid-template-columns: 1fr;
+        }
+        .chart-card {
+            background: var(--color-background-primary);
+            border: 0.5px solid var(--color-border-tertiary);
+            border-radius: var(--border-radius-lg);
+            padding: 14px 16px;
+            width: 100%;
+        }
+        .chart-title {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--color-text-primary);
+            margin-bottom: 4px;
+        }
+        .chart-sub {
+            font-size: 11px;
+            color: var(--color-text-secondary);
+            margin-bottom: 12px;
+        }
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 10px;
+            font-size: 12px;
+            color: var(--color-text-secondary);
+        }
+        .legend span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+        .chart-wrap {
+            position: relative;
+            width: 100%;
+            min-height: 200px;
+        }
+        .status-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .status-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 10px;
+            border-radius: var(--border-radius-md);
+            background: var(--color-background-secondary);
+            font-size: 13px;
+        }
+        .badge {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+        .badge.success {
+            background: #E1F5EE;
+            color: #085041;
+        }
+        .badge.warn {
+            background: #FAEEDA;
+            color: #633806;
+        }
+        .badge.error {
+            background: #FCEBEB;
+            color: #501313;
+        }
+        @media (prefers-color-scheme: dark) {
+            .badge.success {
+                background: #085041;
+                color: #9FE1CB;
+            }
+            .badge.warn {
+                background: #633806;
+                color: #FAC775;
+            }
+            .badge.error {
+                background: #501313;
+                color: #F7C1C1;
+            }
+        }
+        @media (max-width: 640px) {
+            .kpi-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+            .chart-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .insight-box {
+            background: var(--color-background-secondary);
+            border-radius: var(--border-radius-md);
+            padding: 14px 16px;
+            font-size: 13px;
+            line-height: 1.6;
+            margin-top: 14px;
+        }
+        .bar-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+        .bar-label {
+            width: 80px;
+        }
+        .bar-track {
+            flex-grow: 1;
+            background: var(--color-background-tertiary);
+            height: 8px;
+            border-radius: 4px;
+            margin: 0 10px;
+            overflow: hidden;
+        }
+        .bar-fill {
+            display: block;
+            height: 100%;
+        }
+        .bar-val {
+            width: 40px;
+            text-align: right;
+        }
+
+        .table-wrap {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-bottom: 20px;
+            border: 0.5px solid var(--color-border-tertiary);
+            border-radius: var(--border-radius-md);
+            background: var(--color-background-primary);
+            box-shadow: inset -10px 0 10px -10px rgba(0, 0, 0, 0.15);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 11px;
+            text-align: right;
+        }
+
+        th,
+        td {
+            padding: 8px 10px;
+            border-bottom: 0.5px solid var(--color-border-tertiary);
+            border-right: 0.5px solid var(--color-border-tertiary);
+            white-space: nowrap;
+            min-width: 75px;
+        }
+
+        th:last-child,
+        td:last-child {
+            border-right: none;
+        }
+
+        th {
+            font-weight: 600;
+            background: var(--color-background-secondary);
+            color: var(--color-text-secondary);
+        }
+
+        th:first-child,
+        td:first-child {
+            text-align: left;
+            position: -webkit-sticky;
+            position: sticky;
+            left: 0;
+            background: var(--color-background-primary) !important;
+            font-weight: 600;
+            z-index: 2;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.08);
+            min-width: 85px;
+        }
+
+        th:first-child {
+            background: var(--color-background-secondary) !important;
+        }
+
+        .text-left {
+            text-align: left !important;
+        }
+        .text-center {
+            text-align: center !important;
+        }
+
+        .total-row {
+            font-weight: 700;
+            background: var(--color-background-secondary);
+        }
+
+        .total-row td {
+            border-top: 1px double var(--color-border-secondary);
+            background: var(--color-background-secondary) !important;
+        }
+
+        .table-wrap::-webkit-scrollbar {
+            height: 6px;
+        }
+        .table-wrap::-webkit-scrollbar-track {
+            background: var(--color-background-tertiary);
+            border-radius: 3px;
+        }
+        .table-wrap::-webkit-scrollbar-thumb {
+            background: var(--color-text-tertiary);
+            border-radius: 3px;
+        }
+        .table-wrap::-webkit-scrollbar-thumb:hover {
+            background: var(--color-text-secondary);
+        }
+
+        .val-warn {
+            color: #BA7517;
+            font-weight: 600;
+        }
+        .val-error {
+            color: #E24B4A;
+            font-weight: 600;
+        }
+        .val-success {
+            color: #1D9E75;
+            font-weight: 600;
+        }
+        .val-muted {
+            color: var(--color-text-tertiary);
+        }
+    </style>
+</head>
+<body>
+<!-- ===== 页面内容（与之前提供的模板主体完全相同） ===== -->
+<div class="dash">
+    <!-- 标题和摘要 -->
+    <div class="dash-header-wrap">
+        <div class="dash-header">
+            <div class="dash-title-group">
+                <span class="dash-title">R&M Daily Monitor</span>
+                <span class="dash-sub">{{ snapshot_year }} · Operations & Trend Summary</span>
+            </div>
+            <span class="dash-sub" style="font-weight:500;">Daily Run: {{ date_labels|last }} vs {{ date_labels|first }}</span>
+        </div>
+        <div class="summary-box">
+            <div class="sum-card">
+                <div class="sum-card-title">Overall Trend ({{ date_labels|first }} → {{ date_labels|last }})</div>
+                <div class="sum-row">
+                    <span class="sum-label">Order Count</span>
+                    <span class="sum-val">{{ order_table_rows[-2]['date'] }}: {{ order_table_rows[-2]|sum(attribute=payment_order)|int }} → {{ order_table_rows[-1]['date'] }}: {{ order_table_rows[-1]|sum(attribute=payment_order)|int }}</span>
+                </div>
+                <div class="sum-row" style="margin-top: 8px;">
+                    <span class="sum-label">Order Revenue</span>
+                    <span class="sum-val">${{ "%.2f"|format(revenue_table_rows[-2]|sum(attribute=payment_order)) }} → ${{ "%.2f"|format(revenue_table_rows[-1]|sum(attribute=payment_order)) }}</span>
+                </div>
+            </div>
+            <div class="sum-card">
+                <div class="sum-card-title">New Issues (R&M Priority)</div>
+                <div class="sum-row"><span class="sum-label">Critical (P1)</span><span class="badge success">None Active</span></div>
+                <div class="sum-row"><span class="sum-label">Critical (P2)</span><span class="badge success">None Active</span></div>
+                <div class="sum-row"><span class="sum-label">Major (P3)</span><span class="badge success">None Active</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('overview', this)">Overview</button>
+    </div>
+
+    <!-- Overview 内容（与之前模板完全相同，包含所有表格和图表） -->
+    <div id="overview" class="section active">
+        <!-- KPI -->
+        <div class="kpi-grid">
+            <div class="kpi"><div class="kpi-label">Payment type — order count</div><div class="kpi-value">{{ grand_total_orders }}</div><div class="kpi-delta up">Grand Total</div></div>
+            <div class="kpi"><div class="kpi-label">Payment type — revenue share</div><div class="kpi-value">${{ "%.2f"|format(grand_total_rev) }}</div><div class="kpi-delta up">${{ "%.2f"|format(grand_total_rev) }}</div></div>
+            <div class="kpi"><div class="kpi-label">Dynatrace incidents</div><div class="kpi-value">{{ total_dt_incidents }}</div><div class="kpi-delta warn">API: {{ api_percentage }}% of total</div></div>
+            <div class="kpi"><div class="kpi-label">Cronjob success rate</div><div class="kpi-value">{{ cronjob_success_rate }}</div><div class="kpi-delta down">{{ cronjob_failed_count }} failures YTD</div></div>
+        </div>
+
+        <!-- 1. Order Count 表格 -->
+        <div class="chart-row full">
+            <div class="chart-card">
+                <div class="chart-title">1. Order Count by Payment Type – Metrics from Back-office HAC</div>
+                <div class="chart-sub">Recent multi-day transaction volume trend</div>
+                <div class="table-wrap" style="margin-bottom:0;">
+                    <table>
+                        <thead><tr><th>date</th>{% for pt in payment_order %}<th>{{ pt }}</th>{% endfor %}<th>Grand Total</th></tr></thead>
+                        <tbody>
+                        {% for row in order_table_rows %}
+                        <tr {% if loop.last %}class="total-row"{% endif %}>
+                            <td>{{ row.date }}</td>
+                            {% for pt in payment_order %}<td>{{ row[pt] }}</td>{% endfor %}
+                            <td>{{ row|sum(attribute=payment_order)|int }}</td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- 1. 图表 -->
+        <div class="chart-row full">
+            <div class="chart-card">
+                <div class="legend" id="ovPayBarLegend"></div>
+                <div class="chart-wrap" style="height:280px"><canvas id="ovPayBarChart"></canvas></div>
+            </div>
+        </div>
+
+        <!-- 2. Revenue 表格 -->
+        <div class="chart-row full">
+            <div class="chart-card">
+                <div class="chart-title">2. Order Total price (without tax) by Payment Type – Metrics from Back-office HAC</div>
+                <div class="chart-sub">Recent multi-day total revenue trend</div>
+                <div class="table-wrap" style="margin-bottom:0;">
+                    <table>
+                        <thead><tr><th>date</th>{% for pt in payment_order %}<th>{{ pt }}</th>{% endfor %}<th>Grand Total</th></tr></thead>
+                        <tbody>
+                        {% for row in revenue_table_rows %}
+                        <tr {% if loop.last %}class="total-row"{% endif %}>
+                            <td>{{ row.date }}</td>
+                            {% for pt in payment_order %}<td>${{ "%.2f"|format(row[pt]) }}</td>{% endfor %}
+                            <td>${{ "%.2f"|format(row|sum(attribute=payment_order)) }}</td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- 2. 图表 -->
+        <div class="chart-row full">
+            <div class="chart-card">
+                <div class="legend" id="ovPayRevLegend"></div>
+                <div class="chart-wrap" style="height:280px"><canvas id="ovPayRevChart"></canvas></div>
+            </div>
+        </div>
+
+        <!-- 3. Kibana 表格 -->
+        <div class="chart-row full">
+            <div class="chart-card">
+                <div class="chart-title">3. Kibana Logs – Search Kibana logs for 17 key items</div>
+                <div class="chart-sub">{{ date_labels|last }} · System log metrics &amp; alerts</div>
+                <div class="table-wrap" style="margin-bottom:0;">
+                    <table>
+                        <thead>
+                        <tr><th>Date</th><th>All Services Status</th><th>Cordial Rate Limit</th><th>Cordial Email Fail</th><th>Email Server Busy</th><th>Versatile API TO</th><th>Zip→Zone API</th><th>Zip→Delivery API</th><th>ECC Update Product</th><th>Invalid Variant</th><th>Affirm Void</th><th>Affirm Auth Issues</th><th>Failed Capture</th><th>Failed Auth</th><th>Google API TO</th><th>Delivery Zip</th><th>Vertex Fallback</th></tr>
+                        </thead>
+                        <tbody>
+                        {% for row in kibana_table_rows %}
+                        <tr>
+                            <td>{{ row.date }}</td>
+                            <td>{{ row['All Services Status'] }}</td>
+                            <td>{{ row['Cordial Rate Limit Exceeded (hits)'] }}</td>
+                            <td>{{ row['Cordial Email failure (order #)'] }}</td>
+                            <td>{{ row['Monitor Email Server Busy Issue'] }}</td>
+                            <td>{{ row['Versatile API Timed Out hits'] }}</td>
+                            <td>{{ row['Zip to Zone Mapping API Status'] }}</td>
+                            <td>{{ row['Zip to DeliveryZone Mapping Status'] }}</td>
+                            <td>{{ row['ECC Update Product to Hybris Issue'] }}</td>
+                            <td>{{ row['Invalid variant'] }}</td>
+                            <td>{{ row['Affirm Void'] }}</td>
+                            <td>{{ row['# of Affirm Auth Timed out / # of failed Retry / # of Affirm 404 Error'] }}</td>
+                            <td>{{ row['Failed payment capture'] }}</td>
+                            <td>{{ row['Failed payment authorization'] }}</td>
+                            <td>{{ row['Google API timeout'] }}</td>
+                            <td>{{ row['Delivery zip code create/update'] }}</td>
+                            <td>{{ row['Vertex fallback'] }}</td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- Kibana 堆叠图 -->
+        <div class="chart-row full">
+            <div class="chart-card">
+                <div class="chart-title">Kibana Logs – Key Metrics (Daily)</div>
+                <div class="chart-sub">Affirm Void, Failed Capture, Failed Auth, Google API TO</div>
+                <div class="legend">
+                    <span><span class="legend-dot" style="background:#E24B4A;"></span>Affirm Void</span>
+                    <span><span class="legend-dot" style="background:#378ADD;"></span>Failed Capture</span>
+                    <span><span class="legend-dot" style="background:#EF9F27;"></span>Failed Auth</span>
+                    <span><span class="legend-dot" style="background:#534AB7;"></span>Google API TO</span>
+                </div>
+                <div class="chart-wrap" style="height:220px;"><canvas id="kibanaStackedChart"></canvas></div>
+            </div>
+        </div>
+
+        <!-- 4. DataHealth -->
+        <div class="chart-row full">
+            <div class="chart-card">
+                <div class="chart-title">4. Data Health (Product/Orders) Chron Jobs – Daily execution status</div>
+                <div class="chart-sub">{{ date_labels|last }} · Data integrity status</div>
+                <div class="table-wrap" style="margin-bottom:0;">
+                    <table>
+                        <thead><tr><th class="text-left">Task Description</th><th>Find issue(s)</th><th>Fix issue(s)</th><th class="text-center">Date</th><th class="text-center">Jira</th></tr></thead>
+                        <tbody>
+                        {% for row in latest_datahealth_rows %}
+                        <tr><td class="text-left">{{ row['Task Description'] }}</td><td>{{ row['Find issue(s)'] }}</td><td>{{ row['Fix issue(s)'] }}</td><td class="text-center">{{ row['Date'] }}</td><td class="text-center">{{ row['Jira'] }}</td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. Cronjob Health -->
+        <div class="chart-row full">
+            <div class="chart-card">
+                <div class="chart-title">5. Other Chron Jobs – Daily execution status</div>
+                <div class="chart-sub">{{ date_labels|last }} · Cronjob execution status &amp; logs</div>
+                <div class="table-wrap" style="margin-bottom:0;">
+                    <table>
+                        <thead><tr><th class="text-left">Cronjob</th><th class="text-left">Job Definition</th><th class="text-left">Job Description</th><th class="text-center">Status</th><th class="text-center">Time (EST)</th><th class="text-left">Comments</th><th class="text-center">Jira</th></tr></thead>
+                        <tbody>
+                        {% for row in latest_cronjob_rows %}
+                        <tr>
+                            <td class="text-left">{{ row['Cronjob'] }}</td>
+                            <td class="text-left">{{ row['Job Definition'] }}</td>
+                            <td class="text-left">{{ row['Job Description'] }}</td>
+                            <td class="text-center"><span class="badge {% if row['Status']|lower == 'success' %}success{% else %}error{% endif %}">{{ row['Status'] }}</span></td>
+                            <td class="text-center">{{ row['Time(EST)'] }}</td>
+                            <td class="text-left">{{ row['comments'] }}</td>
+                            <td class="text-center">{{ row['jira'] }}</td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. QuantumMetric -->
+        <div class="chart-row full">
+            <div class="chart-card">
+                <div class="chart-title">6. Quantum Metric Alerts &amp; Spikes</div>
+                <div class="chart-sub">{{ date_labels|last }} · User session anomalies &amp; frontend alerts</div>
+                <div class="table-wrap" style="margin-bottom:0;">
+                    <table>
+                        <thead><tr><th class="text-left">Issue description</th><th class="text-center">Issue type</th><th class="text-center">Incident Started (MDT)</th><th class="text-center">Incident Ended (MDT)</th><th class="text-center">Status</th><th class="text-left">Analysis and Conclusion</th><th class="text-center">JIRA</th><th class="text-center">Reporter</th></tr></thead>
+                        <tbody>
+                        {% for row in latest_quantum_rows %}
+                        <tr>
+                            <td class="text-left">{{ row['Issue description'] }}</td>
+                            <td class="text-center">{{ row['Issue type'] }}</td>
+                            <td class="text-center">{{ row['Incident Started (MDT)'] }}</td>
+                            <td class="text-center">{{ row['Incident Ended (MDT)'] }}</td>
+                            <td class="text-center"><span class="badge {% if row['Status']|lower == 'closed' %}success{% else %}warn{% endif %}">{{ row['Status'] }}</span></td>
+                            <td class="text-left">{{ row['Analysis and Conclusion'] }}</td>
+                            <td class="text-center">{{ row['JIRA'] }}</td>
+                            <td class="text-center">{{ row['Reporter'] }}</td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. Dynatrace -->
+        <div class="chart-row full">
+            <div class="chart-card">
+                <div class="chart-title">7. Dynatrace Alerts</div>
+                <div class="chart-sub">{{ date_labels|last }} · Dynatrace APM detected problems</div>
+                <div class="table-wrap" style="margin-bottom:0;">
+                    <table>
+                        <thead><tr><th class="text-left">Problem #</th><th class="text-left">Title</th><th class="text-left">Description</th><th class="text-center">Issue Start Time</th><th class="text-center">Duration</th><th class="text-center">Status</th><th class="text-left">Affected Entities</th><th class="text-center">Catalog</th><th class="text-center">Sub Catalog</th><th class="text-left">Analysis and Conclusion</th><th class="text-center">Owner</th></tr></thead>
+                        <tbody>
+                        {% for row in latest_dynatrace_rows %}
+                        <tr>
+                            <td class="text-left">{{ row['Problem #'] }}</td>
+                            <td class="text-left">{{ row['Title'] }}</td>
+                            <td class="text-left">{{ row['Description'] }}</td>
+                            <td class="text-center">{{ row['Issue Start Time'] }}</td>
+                            <td class="text-center">{{ row['Duration (Minute)'] }}</td>
+                            <td class="text-center"><span class="badge {% if row['Status']|lower == 'closed' %}success{% else %}warn{% endif %}">{{ row['Status'] }}</span></td>
+                            <td class="text-left">{{ row['Affected Entities'] }}</td>
+                            <td class="text-center">{{ row['Catalog'] }}</td>
+                            <td class="text-center">{{ row['Sub Catalog'] }}</td>
+                            <td class="text-left">{{ row['Analysis and Conclusion'] }}</td>
+                            <td class="text-center">{{ row['Owner'] }}</td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 8. Hotfolder -->
+        <div class="chart-row full">
+            <div class="chart-card">
+                <div class="chart-title">8. Hot Folder – Product information sync between BI and Hybris</div>
+                <div class="chart-sub">{{ date_labels|last }} · Hotfolder data feed pipeline execution</div>
+                <div class="table-wrap" style="margin-bottom:0;">
+                    <table>
+                        <thead><tr><th class="text-center">Date</th><th class="text-left">Data Update Name</th><th class="text-left">Status</th></tr></thead>
+                        <tbody>
+                        {% for row in latest_hotfolder_rows %}
+                        <tr>
+                            <td class="text-center">{{ row['Date'] }}</td>
+                            <td class="text-left">{{ row['Data Update Name'] }}</td>
+                            <td class="text-left"><span class="badge {% if 'error' in row['Status']|lower %}error{% elif 'success' in row['Status']|lower %}success{% else %}warn{% endif %}">{{ row['Status'] }}</span></td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 9. FR-orders 表格 + 图表 -->
+        <div class="chart-row full">
+            <div class="chart-card">
+                <div class="chart-title">9. Furniture Removal (FR) order count</div>
+                <div class="chart-sub">{{ date_labels|first }} - {{ date_labels|last }} · Weekly trend of Failed Removal orders and associated service cost</div>
+                <div class="table-wrap" style="margin-bottom:0;">
+                    <table>
+                        <thead><tr><th class="text-center">Date</th><th>FR Order Count</th><th>Removal Service Cost Sum</th></tr></thead>
+                        <tbody>
+                        {% for i in range(fr_dates|length) %}
+                        <tr><td class="text-center">{{ fr_dates[i] }}</td><td>{{ fr_orders[i] }}</td><td>${{ fr_costs[i] }}</td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="chart-row full">
+            <div class="chart-card">
+                <div class="legend">
+                    <span><span class="legend-dot" style="background:#E24B4A"></span>FR Order Count</span>
+                    <span><span class="legend-dot" style="background:#378ADD"></span>Removal Service Cost Sum ($)</span>
+                </div>
+                <div class="chart-wrap" style="height:240px"><canvas id="ovFrOrdersChart"></canvas></div>
+            </div>
+        </div>
+
+        <!-- 10. Bloomreach -->
+        <div class="chart-row full">
+            <div class="chart-card">
+                <div class="chart-title">10. Bloomreach Data Feed & Index</div>
+                <div class="chart-sub">{{ date_labels|last }}</div>
+                <div class="table-wrap" style="margin-bottom:0;">
+                    <table>
+                        <thead><tr><th class="text-center">Date</th><th class="text-left">Status</th></tr></thead>
+                        <tbody>
+                        {% for row in latest_bloomreach_rows %}
+                        <tr><td class="text-center">{{ row['Date'] }}</td><td class="text-left"><span class="badge success">{{ row['Status'] }}</span></td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 11. Blog -->
+        <div class="chart-row full">
+            <div class="chart-card">
+                <div class="chart-title">11. Blog Page: <a href="https://www.mybobs.com/blog/" target="_blank" style="color: inherit; text-decoration: none; border-bottom: 1px dotted var(--color-text-tertiary);">https://www.mybobs.com/blog/</a></div>
+                <div class="chart-sub">{{ date_labels|last }}</div>
+                <div class="table-wrap" style="margin-bottom:0;">
+                    <table><thead><tr><th class="text-center">Date</th><th class="text-left">Status</th></tr></thead>
+                        <tbody><tr><td class="text-center">{{ date_labels|last }}</td><td class="text-left"><span class="badge success">Success</span></td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 12. Shoptelligence -->
+        <div class="chart-row full">
+            <div class="chart-card">
+                <div class="chart-title">12. Shoptelligence – PDP Complete Your Room section</div>
+                <div class="chart-sub">{{ date_labels|last }}</div>
+                <div class="table-wrap" style="margin-bottom:0;">
+                    <table><thead><tr><th class="text-center">Date</th><th class="text-left">Status</th></tr></thead>
+                        <tbody><tr><td class="text-center">{{ date_labels|last }}</td><td class="text-left"><span class="badge success">display</span></td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 13 & 14 图片 -->
+        <div class="chart-row full">
+            <div class="chart-card">
+                <div class="chart-title">13. No Product Added to Cart issues count</div>
+                <div class="chart-wrap" style="margin-bottom:0; text-align: center; padding: 8px 0;">
+                    <img src="13.jpg" alt="No Product Added to Cart issues" style="max-width:100%; height:auto; border-radius: var(--border-radius-md); box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
+                </div>
+            </div>
+        </div>
+        <div class="chart-row full">
+            <div class="chart-card">
+                <div class="chart-title">14. Failed Payment Authorization – Kibana logs</div>
+                <div class="chart-wrap" style="margin-bottom:0; text-align: center; padding: 8px 0;">
+                    <img src="14.jpg" alt="Failed Payment Authorization" style="max-width:100%; height:auto; border-radius: var(--border-radius-md); box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Insight -->
+        <div class="chart-row full">
+            <div class="chart-card">
+                <div class="chart-title">🤖 AI Operational Insight</div>
+                <div class="insight-box">{{ ai_insight }}</div>
+            </div>
+        </div>
+    </div><!-- /overview -->
+</div><!-- /.dash -->
+
+<!-- Chart.js 及脚本 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+    // ===== 与之前提供的脚本完全相同 =====
+    const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
+    const gridColor = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
+    const labelColor = '#888780';
+    Chart.defaults.font.size = 11;
+    Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    Chart.defaults.color = labelColor;
+
+    const paymentOrder = {{ payment_order|tojson }};
+    const dateLabels = {{ date_labels|tojson }};
+
+    const paymentColors = {
+        'Acima': '#8E44AD', 'Affirm': '#E24B4A', 'amex': '#B4B2A9',
+        'discover': '#16A085', 'GiftCard': '#7F8C8D', 'mastercard': '#1D9E75',
+        'Paypal': '#EF9F27', 'visa': '#378ADD', 'Synchrony': '#534AB7',
+        'Fortiva': '#D35400', 'Klarna': '#F39C12'
+    };
+    paymentOrder.forEach(pt => { if (!paymentColors[pt]) paymentColors[pt] = '#888'; });
+
+    const payOrderTrends = {};
+    {% for pt in payment_order %}
+    payOrderTrends["{{ pt }}"] = {{ pay_order_series[pt]|tojson }};
+    {% endfor %}
+
+    const payRevTrends = {};
+    {% for pt in payment_order %}
+    payRevTrends["{{ pt }}"] = {{ pay_rev_series[pt]|tojson }};
+    {% endfor %}
+
+    const frDates = {{ fr_dates|tojson }};
+    const frOrders = {{ fr_orders|tojson }};
+    const frCosts = {{ fr_costs|tojson }};
+
+    const kibanaDates = {{ date_labels|tojson }};
+    const kibanaAffirmVoid = {{ kibana_affirm_void|tojson }};
+    const kibanaFailedCapture = {{ kibana_failed_capture|tojson }};
+    const kibanaFailedAuth = {{ kibana_failed_auth|tojson }};
+    const kibanaGoogleApiTO = {{ kibana_google_timeout|tojson }};
+
+    function renderLegend(id) {
+        const container = document.getElementById(id);
+        if (!container) return;
+        container.innerHTML = paymentOrder.map(pt =>
+            `<span><span class="legend-dot" style="background:${paymentColors[pt] || '#888'}"></span>${pt}</span>`
+        ).join('');
+    }
+
+    function createLineChart(id, labels, datasets, options) {
+        const ctx = document.getElementById(id);
+        if (!ctx) return;
+        new Chart(ctx, {
+            type: 'line',
+            data: { labels, datasets },
+            options: Object.assign({
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { color: gridColor }, ticks: { color: labelColor } },
+                    y: { grid: { color: gridColor }, ticks: { color: labelColor } }
+                }
+            }, options || {})
+        });
+    }
+
+    function createStackedBar(id, labels, datasets) {
+        const ctx = document.getElementById(id);
+        if (!ctx) return;
+        new Chart(ctx, {
+            type: 'bar',
+            data: { labels, datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { color: gridColor }, ticks: { color: labelColor } },
+                    y: { grid: { color: gridColor }, ticks: { color: labelColor }, stacked: true }
+                }
+            }
+        });
+    }
+
+    function buildPaymentDatasets(trendSource) {
+        return paymentOrder.map(pt => ({
+            label: pt,
+            data: trendSource[pt],
+            borderColor: paymentColors[pt] || '#888',
+            backgroundColor: 'transparent',
+            tension: 0.3,
+            pointRadius: 2.5,
+            borderWidth: 1.5
+        }));
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        renderLegend('ovPayBarLegend');
+        renderLegend('ovPayRevLegend');
+
+        createLineChart('ovPayBarChart', dateLabels, buildPaymentDatasets(payOrderTrends), {
+            scales: { y: { grid: { color: gridColor }, ticks: { color: labelColor } } }
+        });
+        createLineChart('ovPayRevChart', dateLabels, buildPaymentDatasets(payRevTrends), {
+            scales: { y: { grid: { color: gridColor }, ticks: { color: labelColor, callback: v => '$' + (v/1000).toFixed(0) + 'k' } } }
+        });
+        createStackedBar('kibanaStackedChart', kibanaDates, [
+            { label: 'Affirm Void', data: kibanaAffirmVoid, backgroundColor: '#E24B4A', borderRadius: 3, stack: 'k' },
+            { label: 'Failed Capture', data: kibanaFailedCapture, backgroundColor: '#378ADD', borderRadius: 3, stack: 'k' },
+            { label: 'Failed Auth', data: kibanaFailedAuth, backgroundColor: '#EF9F27', borderRadius: 3, stack: 'k' },
+            { label: 'Google API TO', data: kibanaGoogleApiTO, backgroundColor: '#534AB7', borderRadius: 3, stack: 'k' }
+        ]);
+
+        const frCtx = document.getElementById('ovFrOrdersChart');
+        if (frCtx) {
+            new Chart(frCtx, {
+                type: 'bar',
+                data: {
+                    labels: frDates,
+                    datasets: [{
+                        type: 'line',
+                        label: 'FR Order Count',
+                        data: frOrders,
+                        borderColor: '#E24B4A',
+                        backgroundColor: '#E24B4A',
+                        tension: 0.3,
+                        pointRadius: 3,
+                        borderWidth: 2,
+                        yAxisID: 'yCount'
+                    }, {
+                        type: 'bar',
+                        label: 'Removal Service Cost Sum',
+                        data: frCosts,
+                        backgroundColor: 'rgba(55, 138, 221, 0.45)',
+                        borderColor: '#378ADD',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        yAxisID: 'yCost'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: gridColor }, ticks: { color: labelColor } },
+                        yCount: {
+                            type: 'linear',
+                            position: 'left',
+                            title: { display: true, text: 'Order Count', color: labelColor },
+                            grid: { color: gridColor },
+                            ticks: { color: labelColor }
+                        },
+                        yCost: {
+                            type: 'linear',
+                            position: 'right',
+                            title: { display: true, text: 'Cost ($)', color: labelColor },
+                            grid: { display: false },
+                            ticks: { color: labelColor, callback: v => '$' + (v/1000).toFixed(1) + 'k' }
+                        }
+                    }
+                }
+            });
+        }
+    });
+
+    function switchTab(id, btn) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        btn.classList.add('active');
+        setTimeout(() => {
+            Chart.instances.forEach(chart => chart.resize());
+        }, 80);
+    }
+</script>
+</body>
+</html>
