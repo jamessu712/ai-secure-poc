@@ -96,19 +96,30 @@
         .sum-row:last-child { margin-bottom: 0; }
         .sum-label { color: var(--color-text-secondary); }
         .sum-val { font-weight: 500; }
-        .sum-change-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 3px;
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--color-success);
-            background: var(--color-success-bg);
-            padding: 1px 6px;
-            border-radius: 4px;
-            margin-left: 6px;
-        }
-        .sum-change-badge::before { content: "↑"; }
+.sum-change-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+}
+.sum-change-badge.up {
+    color: var(--color-success);
+    background: var(--color-success-bg);
+}
+.sum-change-badge.up::before {
+    content: "↑";
+}
+.sum-change-badge.down {
+    color: #E24B4A;
+    background: #FCEBEB;
+}
+.sum-change-badge.down::before {
+    content: "↓";
+}
         @media (max-width: 640px) { .summary-box { grid-template-columns: 1fr; } }
         .tabs {
             display: flex;
@@ -309,18 +320,22 @@
                 <span class="dash-title">R&M Daily Monitor</span>
                 <span class="dash-sub">2026 · Operations & Trend Summary</span>
             </div>
-            <span class="dash-sub" style="font-weight:500;">Daily Run: 06/03/2026 vs 05/28/2026</span>
+            <span class="dash-sub" style="font-weight:500;">Daily Run: {{ last_date }}</span>
         </div>
         <div class="summary-box">
             <div class="sum-card">
-                <div class="sum-card-title">Overall Trend (05/28/2026 → 06/03/2026)</div>
+                <div class="sum-card-title">Overall Summary (Comparing {{ prev_date }} → {{ last_date }})</div>
                 <div class="sum-row">
                     <span class="sum-label">Order Count</span>
-                    <span class="sum-val">06/03/2026: 881 → Grand Total: 6,897</span>
+                    <span class="sum-val">{{ prev_orders_display }} → {{ last_orders_display }}
+                        <span class="sum-change-badge {{ order_arrow }}">{{ order_pct_str }}</span>
+                    </span>
                 </div>
                 <div class="sum-row" style="margin-top: 8px;">
                     <span class="sum-label">Order Revenue</span>
-                    <span class="sum-val">$983,068.14 → $7,801,669.21</span>
+                    <span class="sum-val">{{ prev_rev_display }} → {{ last_rev_display }}
+                        <span class="sum-change-badge {{ rev_arrow }}">{{ rev_pct_str }}</span>
+                    </span>
                 </div>
             </div>
             <div class="sum-card">

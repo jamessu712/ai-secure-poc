@@ -267,6 +267,42 @@ def analyze_and_generate_report(data_dir, template_path, output_path):
             row[col] = day['kibana'].get(col, '-')
         kibana_table_rows.append(row)
 
+
+    # ========== 在这里插入对比最后两天数据的代码 ==========
+    # 计算最后两天对比数据
+    if len(daily_data) >= 2:
+        prev_day = daily_data[-2]
+        last_day = daily_data[-1]
+        prev_date = prev_day['date_label']
+        last_date = last_day['date_label']
+
+        # 计算前两天和后一天的总订单和收入（使用 payment_order 列表）
+        prev_orders = sum(prev_day['order_payment'].get(pt, {}).get('orders', 0) for pt in payment_order)
+        last_orders = sum(last_day['order_payment'].get(pt, {}).get('orders', 0) for pt in payment_order)
+        prev_rev = sum(prev_day['order_payment'].get(pt, {}).get('revenue', 0.0) for pt in payment_order)
+        last_rev = sum(last_day['order_payment'].get(pt, {}).get('revenue', 0.0) for pt in payment_order)
+
+        order_change = last_orders - prev_orders
+        rev_change = last_rev - prev_rev
+        order_pct = (order_change / prev_orders * 100) if prev_orders else 0
+        rev_pct = (rev_change / prev_rev * 100) if prev_rev else 0
+
+        prev_orders_display = f"{prev_orders:,}"
+        last_orders_display = f"{last_orders:,}"
+        prev_rev_display = f"${prev_rev:,.2f}"
+        last_rev_display = f"${last_rev:,.2f}"
+        order_pct_str = f"{order_pct:+.2f}%"
+        rev_pct_str = f"{rev_pct:+.2f}%"
+        order_arrow = "up" if order_change >= 0 else "down"
+        rev_arrow = "up" if rev_change >= 0 else "down"
+    else:
+        prev_date = last_date = date_labels[0] if date_labels else ""
+        prev_orders_display = last_orders_display = "0"
+        prev_rev_display = last_rev_display = "$0.00"
+        order_pct_str = rev_pct_str = "0.00%"
+        order_arrow = rev_arrow = "up"
+
+
     # ========== AI 洞察 ==========
     print("🤖 Requesting Azure OpenAI multi-day operational insights...")
     try:
@@ -345,6 +381,17 @@ def analyze_and_generate_report(data_dir, template_path, output_path):
             'last_day_failed_captures': last_day_failed_captures,
             'last_day_affirm_voids': last_day_affirm_voids,
             'last_day_google_timeouts': last_day_google_timeouts,
+            # AI Overall Summary
+            'prev_date': prev_date,
+            'last_date': last_date,
+            'prev_orders_display': prev_orders_display,
+            'last_orders_display': last_orders_display,
+            'prev_rev_display': prev_rev_display,
+            'last_rev_display': last_rev_display,
+            'order_pct_str': order_pct_str,
+            'rev_pct_str': rev_pct_str,
+            'order_arrow': order_arrow,
+            'rev_arrow': rev_arrow,
         }
 
         rendered_html = template.render(**context)
