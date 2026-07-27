@@ -75,9 +75,9 @@ def analyze_and_generate_report(data_dir, template_path, output_path):
             'hotfolder_df': None,
             'bloomreach_df': None,
             'lighthouse_df': None,
-            # NEW: Blog and Shoptelligence data frames
             'blog_df': None,
             'shoptelligence_df': None,
+            'new_issues_df': None,   # NEW
         }
 
         try:
@@ -124,16 +124,17 @@ def analyze_and_generate_report(data_dir, template_path, output_path):
             day_record['bloomreach_df'] = pd.read_excel(file_path, sheet_name='Bloomreach')
             day_record['lighthouse_df'] = pd.read_excel(file_path, sheet_name='LighthouseProd')
 
-            # NEW: Read Blog Page and Shoptelligence sheets (if they exist)
-            try:
-                day_record['blog_df'] = pd.read_excel(file_path, sheet_name='Blog Page')
-            except Exception:
-                day_record['blog_df'] = None
+            # ---- Dynamic matching for Blog, Shoptelligence, and New Issues ----
+            excel_file = pd.ExcelFile(file_path)
 
-            try:
-                day_record['shoptelligence_df'] = pd.read_excel(file_path, sheet_name='Shoptelligence')
-            except Exception:
-                day_record['shoptelligence_df'] = None
+            blog_sheet = find_sheet_by_keyword(excel_file, 'blog')
+            day_record['blog_df'] = pd.read_excel(file_path, sheet_name=blog_sheet) if blog_sheet else None
+
+            shoptelligence_sheet = find_sheet_by_keyword(excel_file, 'shoptelligence')
+            day_record['shoptelligence_df'] = pd.read_excel(file_path, sheet_name=shoptelligence_sheet) if shoptelligence_sheet else None
+
+            new_issues_sheet = find_sheet_by_keyword(excel_file, 'new issues')
+            day_record['new_issues_df'] = pd.read_excel(file_path, sheet_name=new_issues_sheet) if new_issues_sheet else None
 
             daily_data.append(day_record)
             latest_day_data = day_record
@@ -149,13 +150,11 @@ def analyze_and_generate_report(data_dir, template_path, output_path):
     # ========== Data preparation ==========
     date_labels = [d['date_label'] for d in daily_data]
 
-    # Payment types order (include all found)
     payment_order = ['Acima', 'Affirm', 'amex', 'discover', 'GiftCard', 'mastercard', 'Paypal', 'visa', 'Synchrony', 'Fortiva', 'Klarna']
     for pt in all_payment_types:
         if pt not in payment_order:
             payment_order.append(pt)
 
-    # Build time series for orders and revenue per payment type
     pay_order_series = {}
     pay_rev_series = {}
     for pt in payment_order:
@@ -168,15 +167,12 @@ def analyze_and_generate_report(data_dir, template_path, output_path):
         pay_order_series[pt] = orders
         pay_rev_series[pt] = revs
 
-    # Grand totals
     grand_total_orders = sum(sum(series) for series in pay_order_series.values())
     grand_total_rev = sum(sum(series) for series in pay_rev_series.values())
 
-    # Totals by payment type (for grand total row)
     total_by_pay_order = {pt: sum(pay_order_series[pt]) for pt in payment_order}
     total_by_pay_rev = {pt: sum(pay_rev_series[pt]) for pt in payment_order}
 
-    # Cronjob stats
     total_cronjobs_ran = 0
     total_cronjobs_success = 0
     for day in daily_data:
@@ -187,10 +183,8 @@ def analyze_and_generate_report(data_dir, template_path, output_path):
     cron_success_rate = (total_cronjobs_success / total_cronjobs_ran * 100) if total_cronjobs_ran > 0 else 100.0
     cron_failed = total_cronjobs_ran - total_cronjobs_success
 
-    # Dynatrace incidents total
     total_dt_incidents = sum(len(day['dynatrace_df']) for day in daily_data)
 
-    # Latest day data
     latest = daily_data[-1]
     last_day_orders = sum(latest['order_payment'].get(pt, {}).get('orders', 0) for pt in payment_order)
     last_day_rev = sum(latest['order_payment'].get(pt, {}).get('revenue', 0.0) for pt in payment_order)
@@ -201,19 +195,16 @@ def analyze_and_generate_report(data_dir, template_path, output_path):
     last_day_affirm_voids = kibana_latest.get('Affirm Void', 0)
     last_day_google_timeouts = kibana_latest.get('Google API timeout', 0)
 
-    # FR data
     fr_dates = [d['date_label'] for d in daily_data]
     fr_orders = [d['fr_order'] for d in daily_data]
     fr_costs_numeric = [d['fr_cost'] for d in daily_data]
     fr_costs_formatted = [f"${c:,.2f}" for c in fr_costs_numeric]
 
-    # Kibana stacked chart data
     kibana_affirm_void = [d['kibana'].get('Affirm Void', 0) for d in daily_data]
     kibana_failed_capture = [d['kibana'].get('Failed payment capture', 0) for d in daily_data]
     kibana_failed_auth = [d['kibana'].get('Failed payment authorization', 0) for d in daily_data]
     kibana_google_timeout = [d['kibana'].get('Google API timeout', 0) for d in daily_data]
 
-    # Dynatrace catalog breakdown
     dt_catalog_counts = {}
     for day in daily_data:
         df = day['dynatrace_df']
@@ -223,11 +214,9 @@ def analyze_and_generate_report(data_dir, template_path, output_path):
     api_count = dt_catalog_counts.get('API', 0)
     api_pct = round((api_count / total_dt_incidents * 100), 1) if total_dt_incidents > 0 else 0
 
-    # Prepare table rows with empty values replaced by "-"
     def clean_row_dict(row_dict):
         return {k: safe_str(v) for k, v in row_dict.items()}
 
-    # Order and Revenue tables
     order_table_rows = []
     revenue_table_rows = []
     for i, day in enumerate(daily_data):
@@ -246,7 +235,6 @@ def analyze_and_generate_report(data_dir, template_path, output_path):
         order_table_rows.append(clean_row_dict(row_order))
         revenue_table_rows.append(clean_row_dict(row_rev))
 
-    # Grand total rows
     total_order_row = {'date': 'Grand Total'}
     total_rev_row = {'date': 'Grand Total'}
     for pt in payment_order:
@@ -257,7 +245,6 @@ def analyze_and_generate_report(data_dir, template_path, output_path):
     order_table_rows.append(clean_row_dict(total_order_row))
     revenue_table_rows.append(clean_row_dict(total_rev_row))
 
-    # Kibana table rows
     kibana_columns = ['All Services Status', 'Cordial Rate Limit Exceeded (hits)', 'Cordial Email failure (order #)',
                       'Monitor Email Server Busy Issue', 'Versatile API Timed Out hits', 'Zip to Zone Mapping API Status',
                       'Zip to DeliveryZone Mapping Status', 'ECC Update Product to Hybris Issue', 'Invalid variant',
@@ -272,19 +259,15 @@ def analyze_and_generate_report(data_dir, template_path, output_path):
             row[col] = safe_str(val)
         kibana_table_rows.append(row)
 
-    # ---- Build QuantumMetric and Dynatrace rows using ONLY the latest day ----
+    # ---- Quantum & Dynatrace (only latest) ----
     all_quantum_rows = []
     all_dynatrace_rows = []
-
-    # QuantumMetric – latest day
     df_q_latest = latest['quantummetric_df']
     if df_q_latest is not None and not df_q_latest.empty:
         for _, row in df_q_latest.iterrows():
             row_dict = row.to_dict()
             row_dict['date'] = latest['date_label']
             all_quantum_rows.append(clean_row_dict(row_dict))
-
-    # Dynatrace – latest day
     df_d_latest = latest['dynatrace_df']
     if df_d_latest is not None and not df_d_latest.empty:
         for _, row in df_d_latest.iterrows():
@@ -292,17 +275,45 @@ def analyze_and_generate_report(data_dir, template_path, output_path):
             row_dict['date'] = latest['date_label']
             all_dynatrace_rows.append(clean_row_dict(row_dict))
 
-    # Latest day rows for other tables (DataHealth, Cronjob, Hotfolder, Bloomreach)
+    # Other latest-day tables
     latest_datahealth_rows = [clean_row_dict(row) for row in latest['datahealth_df'].to_dict(orient='records')] if latest['datahealth_df'] is not None else []
     latest_cronjob_rows = [clean_row_dict(row) for row in latest['cronjob_df'].to_dict(orient='records')] if latest['cronjob_df'] is not None else []
     latest_hotfolder_rows = [clean_row_dict(row) for row in latest['hotfolder_df'].to_dict(orient='records')] if latest['hotfolder_df'] is not None else []
     latest_bloomreach_rows = [clean_row_dict(row) for row in latest['bloomreach_df'].to_dict(orient='records')] if latest['bloomreach_df'] is not None else []
 
-    # NEW: Latest day rows for Blog and Shoptelligence
-    latest_blog_rows = [clean_row_dict(row) for row in latest['blog_df'].to_dict(orient='records')] if latest['blog_df'] is not None else []
-    latest_shoptelligence_rows = [clean_row_dict(row) for row in latest['shoptelligence_df'].to_dict(orient='records')] if latest['shoptelligence_df'] is not None else []
+    # Blog & Shoptelligence (with fallback)
+    if latest['blog_df'] is not None and not latest['blog_df'].empty:
+        latest_blog_rows = [clean_row_dict(row) for row in latest['blog_df'].to_dict(orient='records')]
+    else:
+        latest_blog_rows = [{'Date': latest['date_label'], 'Status': 'Success'}]
 
-    # Latest two days comparison for summary
+    if latest['shoptelligence_df'] is not None and not latest['shoptelligence_df'].empty:
+        latest_shoptelligence_rows = [clean_row_dict(row) for row in latest['shoptelligence_df'].to_dict(orient='records')]
+    else:
+        latest_shoptelligence_rows = [{'Date': latest['date_label'], 'Status': 'display'}]
+
+    # ---- New Issues ----
+    new_issues_dict = {}
+    if latest['new_issues_df'] is not None and not latest['new_issues_df'].empty:
+        df_ni = latest['new_issues_df']
+        # Expect columns 'Severity' and 'Status'
+        for _, row in df_ni.iterrows():
+            severity = safe_str(row.get('Severity'))
+            status = safe_str(row.get('Status'))
+            if severity != '-':
+                new_issues_dict[severity] = status
+    # If not found or empty, provide defaults
+    default_issues = {
+        'Critical (P1)': 'None Active',
+        'Critical (P2)': 'None Active',
+        'Major (P3)': 'None Active'
+    }
+    # Merge: dict from file overrides defaults if present
+    for key in default_issues:
+        if key not in new_issues_dict:
+            new_issues_dict[key] = default_issues[key]
+
+    # Comparison summary
     if len(daily_data) >= 2:
         prev_day = daily_data[-2]
         last_day = daily_data[-1]
@@ -369,7 +380,6 @@ def analyze_and_generate_report(data_dir, template_path, output_path):
             'daily_data': daily_data,
             'date_labels': date_labels,
             'payment_order': payment_order,
-            # KPI (formatted)
             'total_orders_day': f"{last_day_orders:,}",
             'total_rev_day': f"${last_day_rev:,.2f}",
             'grand_total_orders_fmt': f"{grand_total_orders:,}",
@@ -378,7 +388,6 @@ def analyze_and_generate_report(data_dir, template_path, output_path):
             'api_percentage': api_pct,
             'cronjob_success_rate': f"{cron_success_rate:.1f}%",
             'cronjob_failed_count': cron_failed,
-            # Table data
             'order_table_rows': order_table_rows,
             'revenue_table_rows': revenue_table_rows,
             'kibana_table_rows': kibana_table_rows,
@@ -388,21 +397,19 @@ def analyze_and_generate_report(data_dir, template_path, output_path):
             'latest_cronjob_rows': latest_cronjob_rows,
             'latest_hotfolder_rows': latest_hotfolder_rows,
             'latest_bloomreach_rows': latest_bloomreach_rows,
-            # NEW: Blog and Shoptelligence table rows
             'latest_blog_rows': latest_blog_rows,
             'latest_shoptelligence_rows': latest_shoptelligence_rows,
-            # Chart data (as JSON)
+            'new_issues_dict': new_issues_dict,   # NEW
             'pay_order_series': pay_order_series,
             'pay_rev_series': pay_rev_series,
             'fr_dates': fr_dates,
             'fr_orders': fr_orders,
-            'fr_costs': fr_costs_numeric,        # numeric for chart
-            'fr_costs_formatted': fr_costs_formatted, # for display
+            'fr_costs': fr_costs_numeric,
+            'fr_costs_formatted': fr_costs_formatted,
             'kibana_affirm_void': kibana_affirm_void,
             'kibana_failed_capture': kibana_failed_capture,
             'kibana_failed_auth': kibana_failed_auth,
             'kibana_google_timeout': kibana_google_timeout,
-            # AI and summary
             'ai_insight': ai_insight,
             'last_day_orders': last_day_orders,
             'last_day_rev': last_day_rev,
@@ -411,7 +418,6 @@ def analyze_and_generate_report(data_dir, template_path, output_path):
             'last_day_failed_captures': last_day_failed_captures,
             'last_day_affirm_voids': last_day_affirm_voids,
             'last_day_google_timeouts': last_day_google_timeouts,
-            # Comparison summary
             'prev_date': prev_date,
             'last_date': last_date,
             'prev_orders_display': prev_orders_display,

@@ -340,9 +340,9 @@
             </div>
             <div class="sum-card">
                 <div class="sum-card-title">New Issues (R&M Priority)</div>
-                <div class="sum-row"><span class="sum-label">Critical (P1)</span><span class="badge success">None Active</span></div>
-                <div class="sum-row"><span class="sum-label">Critical (P2)</span><span class="badge success">None Active</span></div>
-                <div class="sum-row"><span class="sum-label">Major (P3)</span><span class="badge success">None Active</span></div>
+                <div class="sum-row"><span class="sum-label">Critical (P1)</span><span class="badge success">{{ new_issues_dict.get('Critical (P1)', 'None Active') }}</span></div>
+                <div class="sum-row"><span class="sum-label">Critical (P2)</span><span class="badge success">{{ new_issues_dict.get('Critical (P2)', 'None Active') }}</span></div>
+                <div class="sum-row"><span class="sum-label">Major (P3)</span><span class="badge success">{{ new_issues_dict.get('Major (P3)', 'None Active') }}</span></div>
             </div>
         </div>
     </div>
