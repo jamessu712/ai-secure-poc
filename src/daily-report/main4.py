@@ -25,10 +25,18 @@ def format_date_label(date_str):
         return date_str
 
 def safe_str(val):
-    """Return '-' if val is empty, NaN, or None; else return str(val)"""
-    if val is None or (isinstance(val, float) and pd.isna(val)) or val == "" or val == "nan":
+    """Return '-' if val is empty, NaN, NaT, or None; else return str(val)"""
+    if val is None or pd.isnull(val) or val == "" or val == "nan":
         return "-"
     return str(val)
+
+def find_sheet_by_keyword(excel_file, keyword):
+    """Return the first sheet name that contains 'keyword' (case-insensitive)."""
+    sheets = excel_file.sheet_names
+    for name in sheets:
+        if keyword.lower() in name.lower():
+            return name
+    return None
 
 def analyze_and_generate_report(data_dir, template_path, output_path):
     print(f"🚀 Starting full multi-source log processing... Target folder: {data_dir}")
