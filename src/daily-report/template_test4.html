@@ -703,8 +703,15 @@
                 <div class="chart-title">11. Blog Page: <a href="https://www.mybobs.com/blog/" target="_blank" style="color: inherit; text-decoration: none; border-bottom: 1px dotted var(--color-text-tertiary);">https://www.mybobs.com/blog/</a></div>
                 <div class="chart-sub">{{ daily_data[-1].date_label }}</div>
                 <div class="table-wrap" style="margin-bottom:0;">
-                    <table><thead><tr><th class="text-center">Date</th><th class="text-left">Status</th></tr></thead>
-                        <tbody><tr><td class="text-center">{{ daily_data[-1].date_label }}</td><td class="text-left"><span class="badge success">Success</span></td></tr></tbody>
+                    <table>
+                        <thead><tr><th class="text-center">Date</th><th class="text-left">Status</th></tr></thead>
+                        <tbody>
+                        {% for row in latest_blog_rows %}
+                        <tr><td class="text-center">{{ row.get('Date', '-') }}</td><td class="text-left">{{ row.get('Status', '-') }}</td></tr>
+                        {% else %}
+                        <tr><td class="text-center">-</td><td class="text-left">No data</td></tr>
+                        {% endfor %}
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -716,8 +723,15 @@
                 <div class="chart-title">12. Shoptelligence – PDP Complete Your Room section</div>
                 <div class="chart-sub">{{ daily_data[-1].date_label }}</div>
                 <div class="table-wrap" style="margin-bottom:0;">
-                    <table><thead><tr><th class="text-center">Date</th><th class="text-left">Status</th></tr></thead>
-                        <tbody><tr><td class="text-center">{{ daily_data[-1].date_label }}</td><td class="text-left"><span class="badge success">display</span></td></tr></tbody>
+                    <table>
+                        <thead><tr><th class="text-center">Date</th><th class="text-left">Status</th></tr></thead>
+                        <tbody>
+                        {% for row in latest_shoptelligence_rows %}
+                        <tr><td class="text-center">{{ row.get('Date', '-') }}</td><td class="text-left">{{ row.get('Status', '-') }}</td></tr>
+                        {% else %}
+                        <tr><td class="text-center">-</td><td class="text-left">No data</td></tr>
+                        {% endfor %}
+                        </tbody>
                     </table>
                 </div>
             </div>

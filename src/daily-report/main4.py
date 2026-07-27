@@ -67,6 +67,9 @@ def analyze_and_generate_report(data_dir, template_path, output_path):
             'hotfolder_df': None,
             'bloomreach_df': None,
             'lighthouse_df': None,
+            # NEW: Blog and Shoptelligence data frames
+            'blog_df': None,
+            'shoptelligence_df': None,
         }
 
         try:
@@ -112,6 +115,17 @@ def analyze_and_generate_report(data_dir, template_path, output_path):
             day_record['hotfolder_df'] = pd.read_excel(file_path, sheet_name='Hotfolder')
             day_record['bloomreach_df'] = pd.read_excel(file_path, sheet_name='Bloomreach')
             day_record['lighthouse_df'] = pd.read_excel(file_path, sheet_name='LighthouseProd')
+
+            # NEW: Read Blog Page and Shoptelligence sheets (if they exist)
+            try:
+                day_record['blog_df'] = pd.read_excel(file_path, sheet_name='Blog Page')
+            except Exception:
+                day_record['blog_df'] = None
+
+            try:
+                day_record['shoptelligence_df'] = pd.read_excel(file_path, sheet_name='Shoptelligence')
+            except Exception:
+                day_record['shoptelligence_df'] = None
 
             daily_data.append(day_record)
             latest_day_data = day_record
@@ -250,7 +264,7 @@ def analyze_and_generate_report(data_dir, template_path, output_path):
             row[col] = safe_str(val)
         kibana_table_rows.append(row)
 
-    # ---- FIX: Build QuantumMetric and Dynatrace rows using ONLY the latest day ----
+    # ---- Build QuantumMetric and Dynatrace rows using ONLY the latest day ----
     all_quantum_rows = []
     all_dynatrace_rows = []
 
@@ -270,11 +284,15 @@ def analyze_and_generate_report(data_dir, template_path, output_path):
             row_dict['date'] = latest['date_label']
             all_dynatrace_rows.append(clean_row_dict(row_dict))
 
-    # Latest day rows for other tables (DataHealth, Cronjob, Hotfolder, Bloomreach) – unchanged
+    # Latest day rows for other tables (DataHealth, Cronjob, Hotfolder, Bloomreach)
     latest_datahealth_rows = [clean_row_dict(row) for row in latest['datahealth_df'].to_dict(orient='records')] if latest['datahealth_df'] is not None else []
     latest_cronjob_rows = [clean_row_dict(row) for row in latest['cronjob_df'].to_dict(orient='records')] if latest['cronjob_df'] is not None else []
     latest_hotfolder_rows = [clean_row_dict(row) for row in latest['hotfolder_df'].to_dict(orient='records')] if latest['hotfolder_df'] is not None else []
     latest_bloomreach_rows = [clean_row_dict(row) for row in latest['bloomreach_df'].to_dict(orient='records')] if latest['bloomreach_df'] is not None else []
+
+    # NEW: Latest day rows for Blog and Shoptelligence
+    latest_blog_rows = [clean_row_dict(row) for row in latest['blog_df'].to_dict(orient='records')] if latest['blog_df'] is not None else []
+    latest_shoptelligence_rows = [clean_row_dict(row) for row in latest['shoptelligence_df'].to_dict(orient='records')] if latest['shoptelligence_df'] is not None else []
 
     # Latest two days comparison for summary
     if len(daily_data) >= 2:
@@ -362,6 +380,9 @@ def analyze_and_generate_report(data_dir, template_path, output_path):
             'latest_cronjob_rows': latest_cronjob_rows,
             'latest_hotfolder_rows': latest_hotfolder_rows,
             'latest_bloomreach_rows': latest_bloomreach_rows,
+            # NEW: Blog and Shoptelligence table rows
+            'latest_blog_rows': latest_blog_rows,
+            'latest_shoptelligence_rows': latest_shoptelligence_rows,
             # Chart data (as JSON)
             'pay_order_series': pay_order_series,
             'pay_rev_series': pay_rev_series,
