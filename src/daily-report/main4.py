@@ -6,6 +6,7 @@ from openai import AzureOpenAI
 from config import *
 from datetime import datetime
 import re
+import base64  # 新增
 
 def parse_date_from_filename(filename):
     """Parse date string from filename like '05282026.xlsx' -> '2026-05-28'"""
@@ -37,6 +38,22 @@ def find_sheet_by_keyword(excel_file, keyword):
         if keyword.lower() in name.lower():
             return name
     return None
+
+def image_to_base64(image_path):
+    """Read image and return base64 data URI, or None if missing/error."""
+    if not os.path.exists(image_path):
+        return None
+    try:
+        with open(image_path, "rb") as f:
+            img_data = f.read()
+        ext = os.path.splitext(image_path)[1].lower()
+        mime_map = {'.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.gif': 'image/gif'}
+        mime = mime_map.get(ext, 'image/jpeg')
+        b64 = base64.b64encode(img_data).decode('utf-8')
+        return f"data:{mime};base64,{b64}"
+    except Exception as e:
+        print(f"⚠️ Failed to encode image {image_path}: {e}")
+        return None
 
 def analyze_and_generate_report(data_dir, template_path, output_path):
     print(f"🚀 Starting full multi-source log processing... Target folder: {data_dir}")
@@ -77,7 +94,7 @@ def analyze_and_generate_report(data_dir, template_path, output_path):
             'lighthouse_df': None,
             'blog_df': None,
             'shoptelligence_df': None,
-            'new_issues_df': None,   # NEW
+            'new_issues_df': None,
         }
 
         try:
@@ -124,15 +141,12 @@ def analyze_and_generate_report(data_dir, template_path, output_path):
             day_record['bloomreach_df'] = pd.read_excel(file_path, sheet_name='Bloomreach')
             day_record['lighthouse_df'] = pd.read_excel(file_path, sheet_name='LighthouseProd')
 
-            # ---- Dynamic matching for Blog, Shoptelligence, and New Issues ----
+            # ---- Dynamic matching ----
             excel_file = pd.ExcelFile(file_path)
-
             blog_sheet = find_sheet_by_keyword(excel_file, 'blog')
             day_record['blog_df'] = pd.read_excel(file_path, sheet_name=blog_sheet) if blog_sheet else None
-
             shoptelligence_sheet = find_sheet_by_keyword(excel_file, 'shoptelligence')
             day_record['shoptelligence_df'] = pd.read_excel(file_path, sheet_name=shoptelligence_sheet) if shoptelligence_sheet else None
-
             new_issues_sheet = find_sheet_by_keyword(excel_file, 'new issues')
             day_record['new_issues_df'] = pd.read_excel(file_path, sheet_name=new_issues_sheet) if new_issues_sheet else None
 
@@ -195,6 +209,15 @@ def analyze_and_generate_report(data_dir, template_path, output_path):
     last_day_affirm_voids = kibana_latest.get('Affirm Void', 0)
     last_day_google_timeouts = kibana_latest.get('Google API timeout', 0)
 
+    # ---- Embed images as base64 ----
+    dt_obj = datetime.strptime(latest['date'], "%Y-%m-%d")
+    img_date_str = dt_obj.strftime("%m%d%Y")
+    img_13_path = os.path.join(data_dir, f"13-{img_date_str}.jpg")
+    img_14_path = os.path.join(data_dir, f"14-{img_date_str}.jpg")
+    img_13_data = image_to_base64(img_13_path) or ""
+    img_14_data = image_to_base64(img_14_path) or ""
+
+    # FR data
     fr_dates = [d['date_label'] for d in daily_data]
     fr_orders = [d['fr_order'] for d in daily_data]
     fr_costs_numeric = [d['fr_cost'] for d in daily_data]
@@ -292,23 +315,20 @@ def analyze_and_generate_report(data_dir, template_path, output_path):
     else:
         latest_shoptelligence_rows = [{'Date': latest['date_label'], 'Status': 'display'}]
 
-    # ---- New Issues ----
+    # New Issues
     new_issues_dict = {}
     if latest['new_issues_df'] is not None and not latest['new_issues_df'].empty:
         df_ni = latest['new_issues_df']
-        # Expect columns 'Severity' and 'Status'
         for _, row in df_ni.iterrows():
             severity = safe_str(row.get('Severity'))
             status = safe_str(row.get('Status'))
             if severity != '-':
                 new_issues_dict[severity] = status
-    # If not found or empty, provide defaults
     default_issues = {
         'Critical (P1)': 'None Active',
         'Critical (P2)': 'None Active',
         'Major (P3)': 'None Active'
     }
-    # Merge: dict from file overrides defaults if present
     for key in default_issues:
         if key not in new_issues_dict:
             new_issues_dict[key] = default_issues[key]
@@ -399,7 +419,9 @@ def analyze_and_generate_report(data_dir, template_path, output_path):
             'latest_bloomreach_rows': latest_bloomreach_rows,
             'latest_blog_rows': latest_blog_rows,
             'latest_shoptelligence_rows': latest_shoptelligence_rows,
-            'new_issues_dict': new_issues_dict,   # NEW
+            'new_issues_dict': new_issues_dict,
+            'img_13': img_13_data,   # Base64 Data URI
+            'img_14': img_14_data,   # Base64 Data URI
             'pay_order_series': pay_order_series,
             'pay_rev_series': pay_rev_series,
             'fr_dates': fr_dates,
