@@ -250,26 +250,27 @@ def analyze_and_generate_report(data_dir, template_path, output_path):
             row[col] = safe_str(val)
         kibana_table_rows.append(row)
 
-    # ---- Build all QuantumMetric and Dynatrace rows across all days ----
+    # ---- FIX: Build QuantumMetric and Dynatrace rows using ONLY the latest day ----
     all_quantum_rows = []
     all_dynatrace_rows = []
 
-    for day in daily_data:
-        df_q = day['quantummetric_df']
-        if df_q is not None and not df_q.empty:
-            for _, row in df_q.iterrows():
-                row_dict = row.to_dict()
-                row_dict['date'] = day['date_label']
-                all_quantum_rows.append(clean_row_dict(row_dict))
+    # QuantumMetric – latest day
+    df_q_latest = latest['quantummetric_df']
+    if df_q_latest is not None and not df_q_latest.empty:
+        for _, row in df_q_latest.iterrows():
+            row_dict = row.to_dict()
+            row_dict['date'] = latest['date_label']
+            all_quantum_rows.append(clean_row_dict(row_dict))
 
-        df_d = day['dynatrace_df']
-        if df_d is not None and not df_d.empty:
-            for _, row in df_d.iterrows():
-                row_dict = row.to_dict()
-                row_dict['date'] = day['date_label']
-                all_dynatrace_rows.append(clean_row_dict(row_dict))
+    # Dynatrace – latest day
+    df_d_latest = latest['dynatrace_df']
+    if df_d_latest is not None and not df_d_latest.empty:
+        for _, row in df_d_latest.iterrows():
+            row_dict = row.to_dict()
+            row_dict['date'] = latest['date_label']
+            all_dynatrace_rows.append(clean_row_dict(row_dict))
 
-    # Latest day rows for other tables (DataHealth, Cronjob, Hotfolder, Bloomreach) – still needed
+    # Latest day rows for other tables (DataHealth, Cronjob, Hotfolder, Bloomreach) – unchanged
     latest_datahealth_rows = [clean_row_dict(row) for row in latest['datahealth_df'].to_dict(orient='records')] if latest['datahealth_df'] is not None else []
     latest_cronjob_rows = [clean_row_dict(row) for row in latest['cronjob_df'].to_dict(orient='records')] if latest['cronjob_df'] is not None else []
     latest_hotfolder_rows = [clean_row_dict(row) for row in latest['hotfolder_df'].to_dict(orient='records')] if latest['hotfolder_df'] is not None else []
