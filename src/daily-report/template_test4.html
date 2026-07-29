@@ -352,6 +352,11 @@
     </div>
 
     <div id="overview" class="section active">
+        <!-- 时间范围 -->
+        <div style="margin-bottom: 16px; font-size: 14px; color: var(--color-text-secondary); display: flex; align-items: baseline; gap: 6px;">
+            <span style="font-weight: 500;">Data Range:</span>
+            <span style="font-weight: 600; color: var(--color-text-primary);">{{ date_labels[0] }} – {{ date_labels[-1] }}</span>
+        </div>
         <!-- KPI -->
         <div class="kpi-grid">
             <div class="kpi"><div class="kpi-label">Payment type — order count</div><div class="kpi-value">{{ grand_total_orders_fmt }}</div><div class="kpi-delta up">Grand Total</div></div>
@@ -478,7 +483,7 @@
             </div>
         </div>
 
-        <!-- Kibana Stacked Chart -->
+        <!-- Kibana Line Chart (now line chart instead of stacked bar) -->
         <div class="chart-row full">
             <div class="chart-card">
                 <div class="chart-title">Kibana Logs – Key Metrics (Daily)</div>
@@ -489,7 +494,7 @@
                     <span><span class="legend-dot" style="background:#EF9F27;"></span>Failed Auth</span>
                     <span><span class="legend-dot" style="background:#534AB7;"></span>Google API TO</span>
                 </div>
-                <div class="chart-wrap" style="height:220px;"><canvas id="kibanaStackedChart"></canvas></div>
+                <div class="chart-wrap" style="height:220px;"><canvas id="kibanaLineChart"></canvas></div>
             </div>
         </div>
 
@@ -819,24 +824,6 @@
         });
     }
 
-    function createStackedBar(id, labels, datasets) {
-        const ctx = document.getElementById(id);
-        if (!ctx) return;
-        new Chart(ctx, {
-            type: 'bar',
-            data: { labels, datasets },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { grid: { color: gridColor }, ticks: { color: labelColor } },
-                    y: { grid: { color: gridColor }, ticks: { color: labelColor }, stacked: true }
-                }
-            }
-        });
-    }
-
     function buildPaymentDatasets(trendSource) {
         return paymentOrder.map(pt => ({
             label: pt,
@@ -859,12 +846,48 @@
         createLineChart('ovPayRevChart', dateLabels, buildPaymentDatasets(payRevTrends), {
             scales: { y: { grid: { color: gridColor }, ticks: { color: labelColor, callback: v => '$' + (v/1000).toFixed(0) + 'k' } } }
         });
-        createStackedBar('kibanaStackedChart', kibanaDates, [
-            { label: 'Affirm Void', data: kibanaAffirmVoid, backgroundColor: '#E24B4A', borderRadius: 3, stack: 'k' },
-            { label: 'Failed Capture', data: kibanaFailedCapture, backgroundColor: '#378ADD', borderRadius: 3, stack: 'k' },
-            { label: 'Failed Auth', data: kibanaFailedAuth, backgroundColor: '#EF9F27', borderRadius: 3, stack: 'k' },
-            { label: 'Google API TO', data: kibanaGoogleApiTO, backgroundColor: '#534AB7', borderRadius: 3, stack: 'k' }
-        ]);
+
+        // ---- Kibana line chart (changed from stacked bar) ----
+        createLineChart('kibanaLineChart', kibanaDates, [
+            {
+                label: 'Affirm Void',
+                data: kibanaAffirmVoid,
+                borderColor: '#E24B4A',
+                backgroundColor: 'transparent',
+                tension: 0.3,
+                pointRadius: 2.5,
+                borderWidth: 1.5
+            },
+            {
+                label: 'Failed Capture',
+                data: kibanaFailedCapture,
+                borderColor: '#378ADD',
+                backgroundColor: 'transparent',
+                tension: 0.3,
+                pointRadius: 2.5,
+                borderWidth: 1.5
+            },
+            {
+                label: 'Failed Auth',
+                data: kibanaFailedAuth,
+                borderColor: '#EF9F27',
+                backgroundColor: 'transparent',
+                tension: 0.3,
+                pointRadius: 2.5,
+                borderWidth: 1.5
+            },
+            {
+                label: 'Google API TO',
+                data: kibanaGoogleApiTO,
+                borderColor: '#534AB7',
+                backgroundColor: 'transparent',
+                tension: 0.3,
+                pointRadius: 2.5,
+                borderWidth: 1.5
+            }
+        ], {
+            scales: { y: { grid: { color: gridColor }, ticks: { color: labelColor } } }
+        });
 
         // FR chart (line + bar)
         const frCtx = document.getElementById('ovFrOrdersChart');
